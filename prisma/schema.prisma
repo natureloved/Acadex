@@ -1,0 +1,258 @@
+// Acadex — Academic Calendar Management System
+// Prisma schema (SQLite for local development).
+//
+// NOTE ON ENUMS: SQLite does not support native enums, so every field that the
+// design document describes as an enum is stored as a String here. The allowed
+// values are declared once in `lib/constants.ts` as TypeScript union types and
+// enforced in the service layer. A PostgreSQL deployment can promote these to
+// real Prisma enums without changing application code.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// People and org structure
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  /// ADMIN | STAFF | STUDENT
+  role         String   @default("STUDENT")
+  facultyId    String?
+  departmentId String?
+  level        Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  faculty    Faculty?    @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  createdEvents CalendarEvent[] @relation("EventCreatedBy")
+  revisions     EventRevision[] @relation("RevisionChangedBy")
+  subscription  Subscription?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@index([role])
+  @@index([facultyId])
+  @@index([departmentId])
+  @@index([isActive])
+}
+
+model Faculty {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  departments Department[]
+  users       User[]
+
+  @@index([name])
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  facultyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  users   User[]
+
+  @@unique([facultyId, name])
+  @@index([facultyId])
+}
+
+// ---------------------------------------------------------------------------
+// Academic calendar structure
+// ---------------------------------------------------------------------------
+
+model AcademicSession {
+  id        String   @id @default(cuid())
+  /// e.g. "2025/2026"
+  name      String   @unique
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  semesters Semester[]
+
+  @@index([isActive])
+}
+
+model Semester {
+  id        String   @id @default(cuid())
+  sessionId String
+  /// FIRST | SECOND
+  type      String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session AcademicSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  events  CalendarEvent[]
+
+  @@unique([sessionId, type])
+  @@index([sessionId])
+  @@index([startDate])
+}
+
+model EventCategory {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  /// Hex colour used for the calendar chip, e.g. "#1D4ED8"
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events CalendarEvent[]
+
+  @@index([name])
+}
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  categoryId  String
+  semesterId  String
+  startAt     DateTime
+  endAt       DateTime
+  allDay      Boolean   @default(true)
+  location    String?
+  /// DRAFT | PUBLISHED | CANCELLED
+  status      String    @default("DRAFT")
+  /// PUBLIC | STAFF_ONLY
+  visibility  String    @default("PUBLIC")
+  /// ALL | FACULTY | DEPARTMENT | LEVEL
+  scope       String    @default("ALL")
+  createdById String
+  publishedAt DateTime?
+  /// Bumped every time the date is moved, so the UI can flag a reschedule.
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category      EventCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  semester      Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  createdBy     User           @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  targets       EventTarget[]
+  revisions     EventRevision[]
+  notifications Notification[]
+
+  @@index([startAt])
+  @@index([endAt])
+  @@index([status])
+  @@index([status, startAt])
+  @@index([visibility, status])
+  @@index([semesterId])
+  @@index([categoryId])
+  @@index([scope])
+}
+
+/// Audience targeting for events whose scope is not ALL.
+/// targetType + targetId is a polymorphic reference to a Faculty, a Department
+/// (both by id) or a level (the level number stored as a string, e.g. "400"),
+/// so it intentionally carries no single foreign key.
+model EventTarget {
+  id         String   @id @default(cuid())
+  eventId    String
+  /// FACULTY | DEPARTMENT | LEVEL
+  targetType String
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, targetType, targetId])
+  @@index([eventId])
+  @@index([targetType, targetId])
+}
+
+/// Append-only change history. This is the technical heart of Acadex: it turns
+/// "reduces confusion about important dates" into a demonstrable feature.
+model EventRevision {
+  id          String   @id @default(cuid())
+  eventId     String
+  changedById String?
+  changedAt   DateTime @default(now())
+  /// CREATED | UPDATED | PUBLISHED | RESCHEDULED | CANCELLED
+  changeType  String
+  /// JSON string holding { before, after, note } snapshots.
+  diffJson    String
+  note        String?
+
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  changedBy User?         @relation("RevisionChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([eventId, changedAt])
+  @@index([changeType])
+}
+
+// ---------------------------------------------------------------------------
+// Subscriptions, notifications, audit
+// ---------------------------------------------------------------------------
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  icsToken  String   @unique
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([icsToken])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  eventId   String?
+  /// e.g. EVENT_PUBLISHED | EVENT_RESCHEDULED | EVENT_CANCELLED | REMINDER
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metaJson  String?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

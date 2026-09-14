@@ -1,0 +1,81 @@
+/**
+ * Date formatting helpers.
+ *
+ * All calendar dates are stored at UTC midnight. Every formatter here pins
+ * `timeZone: "UTC"` so that a student in Lagos and a marker in London see the
+ * same calendar day — formatting in local time would shift an "all-day" event
+ * to the previous or next day.
+ */
+
+const DAY = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+const DAY_NO_YEAR = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+const MONTH_YEAR = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+export function formatDate(date: Date): string {
+  return DAY.format(date);
+}
+
+export function formatMonthHeading(date: Date): string {
+  return MONTH_YEAR.format(date);
+}
+
+/** Stable key for grouping events into month buckets. */
+export function monthKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Human-friendly range: collapses the repeated parts of the date. */
+export function formatDateRange(start: Date, end: Date): string {
+  const sameDay = start.getTime() === end.getTime();
+  if (sameDay) return formatDate(start);
+
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  const sameMonth = sameYear && start.getUTCMonth() === end.getUTCMonth();
+
+  if (sameMonth) {
+    return `${start.getUTCDate()} – ${formatDate(end)}`;
+  }
+  if (sameYear) {
+    return `${DAY_NO_YEAR.format(start)} – ${formatDate(end)}`;
+  }
+  return `${formatDate(start)} – ${formatDate(end)}`;
+}
+
+/** True when the event's window has already finished. */
+export function isPast(date: Date, now: Date = new Date()): boolean {
+  return date.getTime() < now.getTime();
+}
+
+/** Whole days between two instants, rounded down. */
+export function daysBetween(from: Date, to: Date): number {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  return Math.floor((to.getTime() - from.getTime()) / MS_PER_DAY);
+}
+
+/**
+ * "in 12 days" / "today" / "3 days ago" — used for the upcoming countdown.
+ */
+export function formatRelativeDays(target: Date, now: Date = new Date()): string {
+  const delta = daysBetween(now, target);
+
+  if (delta === 0) return "today";
+  if (delta === 1) return "tomorrow";
+  if (delta === -1) return "yesterday";
+  if (delta > 1) return `in ${delta} days`;
+  return `${Math.abs(delta)} days ago`;
+}
