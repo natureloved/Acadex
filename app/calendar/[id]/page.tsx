@@ -24,7 +24,17 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { id } = await props.params;
   const viewer = await getCurrentUser();
-  const event = await getEventForViewer(id, viewer?.role ?? null);
+  const event = await getEventForViewer(
+    id,
+    viewer
+  ? {
+      role: viewer.role,
+      facultyId: viewer.facultyId,
+      departmentId: viewer.departmentId,
+      level: viewer.level,
+    }
+  : null,
+  );
 
   if (!event) return { title: "Event not found" };
 
@@ -40,7 +50,17 @@ export default async function EventDetailPage(props: PageProps<"/calendar/[id]">
   const { id } = await props.params;
   const viewer = await getCurrentUser();
 
-  const event = await getEventForViewer(id, viewer?.role ?? null);
+  const event = await getEventForViewer(
+    id,
+    viewer
+  ? {
+      role: viewer.role,
+      facultyId: viewer.facultyId,
+      departmentId: viewer.departmentId,
+      level: viewer.level,
+    }
+  : null,
+  );
 
   // Drafts, cancelled events and staff-only notices all land here for an
   // unauthorised viewer: a 404 reveals nothing about whether the id exists.

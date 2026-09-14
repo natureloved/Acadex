@@ -9,6 +9,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@/lib/constants";
+import type { Prisma } from "@/lib/generated/prisma/client";
 
 /** Shape shared by the agenda list and the event detail page. */
 const eventCardSelect = {
@@ -29,6 +30,7 @@ const eventCardSelect = {
   semester: {
     select: { id: true, type: true, session: { select: { name: true } } },
   },
+  targets: { select: { targetType: true, targetId: true } },
 } as const;
 
 export type EventCard = {
@@ -47,7 +49,49 @@ export type EventCard = {
   updatedAt: Date;
   category: { name: string; slug: string; color: string };
   semester: { id: string; type: string; session: { name: string } };
+  targets: { targetType: string; targetId: string }[];
 };
+
+/**
+ * The signed-in reader, or null for an anonymous visitor.
+ *
+ * Audience targeting is only meaningful if the read path honours it, so this
+ * is threaded through every public calendar query.
+ */
+export type AgendaViewer = {
+  role: Role;
+  facultyId: string | null;
+  departmentId: string | null;
+  level: number | null;
+} | null;
+
+/**
+ * May this viewer see this event?
+ *
+ * PUBLIC events go to everyone; STAFF_ONLY events only to staff and
+ * administrators. Within that, an event targeted at a faculty, department or
+ * level is shown to the people it names - and to everyone when the scope is ALL.
+ */
+export function canViewEvent(
+  event: {
+    visibility: string;
+    scope: string;
+    targets: { targetType: string; targetId: string }[];
+  },
+  viewer: AgendaViewer,
+): boolean {
+  const isPrivileged = viewer?.role === "ADMIN" || viewer?.role === "STAFF";
+  if (event.visibility === "STAFF_ONLY" && !isPrivileged) return false;
+  if (event.scope === "ALL") return true;
+  if (!viewer) return false;
+
+  return event.targets.some((target) => {
+    if (target.targetType === "FACULTY") return target.targetId === viewer.facultyId;
+    if (target.targetType === "DEPARTMENT") return target.targetId === viewer.departmentId;
+    if (target.targetType === "LEVEL") return target.targetId === String(viewer.level ?? "");
+    return false;
+  });
+}
 
 export type AgendaFilters = {
   semesterId?: string;
@@ -60,6 +104,8 @@ export type AgendaFilters = {
    * archive (e.g. the concluded 2025/2026 session); `all` shows everything.
    */
   range?: "upcoming" | "past" | "all";
+  /** The signed-in reader, when there is one. */
+  viewer?: AgendaViewer;
 };
 
 /** Start of today in UTC — every calendar date is stored at UTC midnight. */
@@ -114,25 +160,55 @@ export async function listAgenda(filters: AgendaFilters = {}): Promise<EventCard
   const range = filters.range ?? "upcoming";
   const today = utcDayStart(new Date());
 
+  const viewer = filters.viewer ?? null;
+  const isPrivileged = viewer?.role === "ADMIN" || viewer?.role === "STAFF";
+
+  // Anonymous visitors, and signed-in users with no faculty or department on
+  // record, only ever see whole-university notices.
+  const scopeConditions: Prisma.CalendarEventWhereInput[] = [{ scope: "ALL" }];
+  if (viewer?.facultyId) {
+    scopeConditions.push({
+      scope: "FACULTY",
+      targets: { some: { targetType: "FACULTY", targetId: viewer.facultyId } },
+    });
+  }
+  if (viewer?.departmentId) {
+    scopeConditions.push({
+      scope: "DEPARTMENT",
+      targets: { some: { targetType: "DEPARTMENT", targetId: viewer.departmentId } },
+    });
+  }
+  if (viewer?.level) {
+    scopeConditions.push({
+      scope: "LEVEL",
+      targets: { some: { targetType: "LEVEL", targetId: String(viewer.level) } },
+    });
+  }
+
+  // Prisma allows only one OR key per level, so the audience test and the free
+  // text search are combined with AND.
+  const and: Prisma.CalendarEventWhereInput[] = [{ OR: scopeConditions }];
+  if (q) {
+    and.push({
+      OR: [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { location: { contains: q } },
+      ],
+    });
+  }
+
   return prisma.calendarEvent.findMany({
     where: {
       status: "PUBLISHED",
-      visibility: "PUBLIC",
+      visibility: isPrivileged ? { in: ["PUBLIC", "STAFF_ONLY"] } : "PUBLIC",
       // An event that ends today stays visible as "upcoming" for the whole day.
       ...(range === "upcoming" ? { endAt: { gte: today } } : {}),
       ...(range === "past" ? { endAt: { lt: today } } : {}),
       ...(filters.sessionId ? { semester: { sessionId: filters.sessionId } } : {}),
       ...(filters.semesterId ? { semesterId: filters.semesterId } : {}),
       ...(filters.categorySlug ? { category: { slug: filters.categorySlug } } : {}),
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q } },
-              { description: { contains: q } },
-              { location: { contains: q } },
-            ],
-          }
-        : {}),
+      AND: and,
     },
     select: eventCardSelect,
     orderBy:
@@ -149,7 +225,7 @@ export async function listAgenda(filters: AgendaFilters = {}): Promise<EventCard
  */
 export async function getEventForViewer(
   id: string,
-  viewerRole: Role | null,
+  viewer: AgendaViewer,
 ): Promise<EventCard | null> {
   const event = await prisma.calendarEvent.findUnique({
     where: { id },
@@ -158,9 +234,7 @@ export async function getEventForViewer(
 
   if (!event) return null;
   if (event.status !== "PUBLISHED") return null;
-
-  const isPrivileged = viewerRole === "ADMIN" || viewerRole === "STAFF";
-  if (event.visibility === "STAFF_ONLY" && !isPrivileged) return null;
+  if (!canViewEvent(event, viewer)) return null;
 
   return event;
 }
@@ -345,20 +419,31 @@ export async function listStaffAgenda(
   viewer: { facultyId: string | null; departmentId: string | null; level: number | null },
   limit = 12,
 ): Promise<EventCard[]> {
-  const targetIds = [viewer.facultyId, viewer.departmentId, viewer.level?.toString()].filter(
-    (value): value is string => Boolean(value),
-  );
+  const or: Prisma.CalendarEventWhereInput[] = [{ scope: "ALL" }];
+  if (viewer.facultyId) {
+    or.push({
+      scope: "FACULTY",
+      targets: { some: { targetType: "FACULTY", targetId: viewer.facultyId } },
+    });
+  }
+  if (viewer.departmentId) {
+    or.push({
+      scope: "DEPARTMENT",
+      targets: { some: { targetType: "DEPARTMENT", targetId: viewer.departmentId } },
+    });
+  }
+  if (viewer.level) {
+    or.push({
+      scope: "LEVEL",
+      targets: { some: { targetType: "LEVEL", targetId: String(viewer.level) } },
+    });
+  }
 
   return prisma.calendarEvent.findMany({
     where: {
       status: "PUBLISHED",
       endAt: { gte: utcDayStart(new Date()) },
-      OR: [
-        { scope: "ALL" },
-        ...(targetIds.length
-          ? [{ targets: { some: { targetId: { in: targetIds } } } }]
-          : []),
-      ],
+      OR: or,
     },
     select: eventCardSelect,
     orderBy: { startAt: "asc" },

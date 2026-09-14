@@ -9,6 +9,7 @@ import {
   labelClasses,
   PageHeading,
 } from "@/components/ui";
+import { getCurrentUser } from "@/lib/auth";
 import { SEMESTER_LABELS, type SemesterType } from "@/lib/constants";
 import {
   getCategoryOptions,
@@ -51,8 +52,24 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
   const forbidden = firstParam(searchParams.error) === "forbidden";
   const welcome = firstParam(searchParams.welcome) === "1";
 
+  const viewer = await getCurrentUser();
+
   const [events, sessions, semesters, categories] = await Promise.all([
-    listAgenda({ sessionId, semesterId, categorySlug, q: query, range }),
+    listAgenda({
+      sessionId,
+      semesterId,
+      categorySlug,
+      q: query,
+      range,
+      viewer: viewer
+  ? {
+      role: viewer.role,
+      facultyId: viewer.facultyId,
+      departmentId: viewer.departmentId,
+      level: viewer.level,
+    }
+  : null,
+    }),
     getSessionOptions(),
     getSemesterOptions(),
     getCategoryOptions(),

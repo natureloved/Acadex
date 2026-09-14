@@ -100,11 +100,17 @@ app/                      Next.js App Router pages
   page.tsx                Landing page (active session summary)
   calendar/               Public agenda + per-event detail with revision history
   login/ register/ logout Auth pages and logout route
-  admin/                  Admin dashboard (ADMIN role only)
+  admin/                  Admin screens: dashboard, events, sessions,
+                          categories, CSV import and the audit log (ADMIN only)
   staff/                  Staff view scoped to faculty/department/level
 components/               Shared UI: agenda items, chips, badges, revision timeline
+components/admin/         Admin-only UI: sub-navigation, event form, import wizard
 lib/                      Data access and domain logic
   auth.ts                 Role checks (server-only, enforced on every request)
+  db.ts                   Prisma client, framework-free so scripts can use it
+  services/               Business rules (event lifecycle, sessions, categories,
+                          CSV import). No framework imports: testable from Node
+  actions/                Server actions: resolve the user, then call a service
   events.ts               Event queries — the single "who may see what" rule
   constants.ts            String "enums" (SQLite has no native enums)
   session.ts              JWT session issuing/verification
@@ -116,6 +122,8 @@ prisma/
   migrations/             Versioned SQLite migration history
   seed.ts                 Idempotent demo-data seed (two sessions)
 proxy.ts                  Coarse route protection for /admin and /staff
+scripts/                  Verification scripts (see "Verifying it works")
+public/csv-import-template.csv  Downloadable template for the CSV importer
 docs/                     ACADEX-PLAN.md (approved plan) and seed-data-sources.md
 ```
 
@@ -134,6 +142,70 @@ docs/                     ACADEX-PLAN.md (approved plan) and seed-data-sources.m
 | `npm run db:reset` | Reset the database, migrate, generate, seed |
 | `npm run db:studio` | Open Prisma Studio |
 | `npm run setup` | Migrate + generate + seed in one step |
+| `npx tsx scripts/verify-phase3.mts` | Service-layer regression test (no server needed) |
+| `npx tsx scripts/verify-http.mts` | Proxy, audience and action checks (dev server running) |
+| `npx tsx scripts/smoke-db.mts` | Quick check that the database layer opens |
+
+## Managing the calendar (admin)
+
+Sign in as `admin@acadex.lasu.edu.ng` and open **Admin**.
+
+| Screen | What it is for |
+| --- | --- |
+| Overview | Counts, the active session and the latest audit entries |
+| Events | Filterable list of every event, drafts included, with its revision number |
+| Sessions | Create sessions and semesters; exactly one session is active at a time |
+| Categories | The colour-coded buckets; a category still in use cannot be deleted |
+| Import | Bulk-load an approved calendar from CSV |
+| Audit | Every create, edit, publish, reschedule, cancellation and deletion |
+
+**Event lifecycle.** Create an event as a *draft* to keep it off the calendar
+while it is still being confirmed, then **Publish** it. Editing the dates of a
+published event records a `RESCHEDULED` revision, increases the revision number
+and notifies the audience; the public event page then carries a "this event was
+rescheduled" notice with the old and new dates. Changing only the wording does
+*not* bump the revision number, so students are not alarmed by a typo fix. A
+published event is **cancelled** rather than deleted - its change history is the
+point of the system - and only drafts can be deleted outright.
+
+**Audience.** *Whole university* goes to everybody. A faculty, department or
+level audience is shown only to those people, and to them on `/calendar` once
+they sign in. *Staff only* additionally hides an event from students. Reschedules
+and cancellations notify exactly the users in that audience.
+
+**Warnings.** Every save runs two conflict checks: an overlap with another event
+that shares the audience, and a clash with an examination window. They are
+warnings, not blocks - a registry sometimes has to schedule around them - and they
+are listed on the event page.
+
+**Importing.** `/admin/import` accepts a CSV with the header
+`title,category,semester,start,end,location,description` (dates `YYYY-MM-DD`,
+semester `FIRST` or `SECOND`, category matched by name). It parses and validates
+first, listing any row it would skip and why; nothing is written until you
+confirm. Imported events arrive as drafts unless you tick "publish immediately".
+A template ships at `public/csv-import-template.csv`.
+
+## Verifying it works
+
+```bash
+npx tsx scripts/verify-phase3.mts   # service layer; no server required
+npm run dev                         # in another terminal
+npx tsx scripts/verify-http.mts     # proxy gating, audience, server actions
+```
+
+`verify-phase3.mts` drives the service layer directly and inspects the database
+after every step: draft, publish, reschedule (including who was notified and who
+was not), cancel, restore, delete, the session and semester rules, guarded
+deletes, and CSV parsing with deliberately malformed rows. It cleans up
+everything it created and exits non-zero if any assertion fails.
+
+`verify-http.mts` mints its own session cookies from the database and exercises
+what only exists over HTTP: proxy gating for anonymous and student visitors,
+every admin screen rendering, the audience model on the public calendar, and the
+server actions themselves (create, reject, delete).
+
+Both print one PASS/FAIL line per assertion. The audit log is append-only by
+design, so these scripts deliberately do not roll that table back.
 
 ## Data honesty
 
