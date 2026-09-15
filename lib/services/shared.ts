@@ -307,6 +307,13 @@ export async function writeRevision(
   });
 }
 
+/**
+ * Append an audit row.
+ *
+ * Returns the new row's id so a caller that needs to point at the entry it just
+ * wrote (the reminder job reports the run it recorded) can do so without a second
+ * query. Existing callers ignore it.
+ */
 export async function writeAudit(
   db: Db,
   input: {
@@ -316,8 +323,8 @@ export async function writeAudit(
     entityId?: string | null;
     meta?: unknown;
   },
-): Promise<void> {
-  await db.auditLog.create({
+): Promise<{ id: string }> {
+  return db.auditLog.create({
     data: {
       actorId: input.actorId,
       action: input.action,
@@ -325,6 +332,7 @@ export async function writeAudit(
       entityId: input.entityId ?? null,
       metaJson: input.meta === undefined ? null : JSON.stringify(input.meta),
     },
+    select: { id: true },
   });
 }
 

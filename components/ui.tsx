@@ -8,12 +8,15 @@
 import Link from "next/link";
 
 import {
+  isNotificationType,
+  NOTIFICATION_LABELS,
   ROLE_BADGE_CLASSES,
   ROLE_LABELS,
   SCOPE_LABELS,
   STATUS_LABELS,
   type EventScope,
   type EventStatus,
+  type NotificationType,
   type Role,
 } from "@/lib/constants";
 
@@ -56,6 +59,29 @@ export function StatusBadge({ status }: { status: string }) {
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${STATUS_CLASSES[key]}`}
     >
       {STATUS_LABELS[key]}
+    </span>
+  );
+}
+
+const NOTIFICATION_CLASSES: Record<NotificationType, string> = {
+  EVENT_RESCHEDULED: "bg-amber-50 text-amber-800 ring-amber-600/20",
+  EVENT_CANCELLED: "bg-rose-50 text-rose-800 ring-rose-600/20",
+  REMINDER_T7: "bg-blue-50 text-blue-800 ring-blue-600/20",
+  REMINDER_T1: "bg-indigo-50 text-indigo-800 ring-indigo-600/20",
+  REMINDER: "bg-slate-100 text-slate-700 ring-slate-300",
+};
+
+/** What kind of notice this is — a reminder, a cancellation, a move. */
+export function NotificationTypeBadge({ type }: { type: string }) {
+  // Unknown kinds (a value written by an older build) simply get no chip rather
+  // than a broken one; the notice's own title still says what it is.
+  if (!isNotificationType(type)) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${NOTIFICATION_CLASSES[type]}`}
+    >
+      {NOTIFICATION_LABELS[type]}
     </span>
   );
 }

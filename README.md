@@ -26,6 +26,9 @@ rescheduled events show exactly what changed and when.
   every request).
 - **Audience targeting** — events can target the whole university, a faculty,
   a department or a single level; staff-only notices stay off the public page.
+- **Notifications and reminders** — a notification centre for every signed-in
+  user (unread state, links to the event) and a scheduled job that reminds an
+  event's audience one week and one day before it starts.
 - **Demo data with an honest provenance** — the seed ships a realistic
   2025/2026 LASU calendar (archive) and a current 2026/2027 session, whose
   dates are explicitly marked provisional because public sources conflict
@@ -61,6 +64,8 @@ npm install
 cp .env.example .env
 #    then edit .env and set AUTH_SECRET to a long random string, e.g.:
 #    node -e "console.log(crypto.randomBytes(32).toString('base64url'))"
+#    and CRON_SECRET, which guards the reminder endpoint (same command) —
+#    see "Notifications and reminders" below
 
 # 3. Create the database, apply migrations and seed the demo data
 npm run setup
@@ -107,14 +112,17 @@ app/                      Next.js App Router pages
   staff/                  Staff view scoped to faculty/department/level
   ics/[token]/            .ics subscription feeds (the token is the credential)
   subscribe/              Subscribe screen: feed address, instructions, rotate
+  notifications/          Notification centre: every notice addressed to you
+  api/reminders/run/      Scheduler entry point for the reminder job (CRON_SECRET)
 components/               Shared UI: agenda items, chips, badges, revision timeline
 components/admin/         Admin-only UI: sub-navigation, event form, import wizard
 lib/                      Data access and domain logic
   auth.ts                 Role checks (server-only, enforced on every request)
   db.ts                   Prisma client, framework-free so scripts can use it
   services/               Business rules: event lifecycle, sessions, categories,
-                          CSV import and iCalendar feeds. No framework imports,
-                          so the verify scripts exercise them directly
+                          CSV import, iCalendar feeds and notifications/reminders.
+                          No framework imports, so the verify scripts exercise
+                          them directly
   actions/                Server actions: resolve the user, then call a service
   events.ts               Event queries — the single "who may see what" rule
   constants.ts            String "enums" (SQLite has no native enums)
@@ -147,9 +155,11 @@ docs/                     ACADEX-PLAN.md (approved plan) and seed-data-sources.m
 | `npm run db:reset` | Reset the database, migrate, generate, seed |
 | `npm run db:studio` | Open Prisma Studio |
 | `npm run setup` | Migrate + generate + seed in one step |
+| `npm run reminders` | Run the reminder job without HTTP (see below) |
 | `npx tsx scripts/verify-phase3.mts` | Service-layer regression test (no server needed) |
 | `npx tsx scripts/verify-http.mts` | Proxy, audience and action checks (dev server running) |
 | `npx tsx scripts/verify-phase4.mts` | Feeds, subscribe screen and print view (dev server running) |
+| `npx tsx scripts/verify-phase5.mts` | Notifications, the reminder job and the endpoint (dev server running) |
 | `npx tsx scripts/smoke-db.mts` | Quick check that the database layer opens |
 
 ## Managing the calendar (admin)
@@ -234,13 +244,131 @@ laid out for paper with a "Print / save as PDF" button. That uses the browser's 
 PDF engine, so there is no dependency to install and no server-side rendering service
 to run.
 
+## Notifications and reminders
+
+Subscribing puts the calendar in one application. Notifications reach people inside
+Acadex, without them having to look:
+
+- **The centre** (`/notifications`) lists every notice addressed to one person,
+  newest first, with unread notices visually distinct, a link to the event and a
+  "mark as read" control per row plus a "mark all as read" action. An `?unread=1`
+  filter narrows it to what is outstanding. The header shows the unread count for
+  signed-in users, and hides the badge at zero.
+- **The reminder job** writes a `REMINDER_T7` one week before a published event
+  starts and a `REMINDER_T1` the day before, to everyone in that event's audience —
+  the same audience rule as the calendar, the staff view and the feeds, so a
+  department-scoped event reminds that department only and a staff-only notice
+  never reaches a student.
+
+Everything is server-rendered; the marking controls are real forms posting to
+server actions, so the page works with JavaScript disabled. Reads and writes are
+scoped to the signed-in user id in the service layer, so one account cannot see or
+mark another account's notices.
+
+The job is idempotent: a reminder is written at most once per person, event and
+horizon, so running it twice — or a scheduler firing twice by accident — creates
+nothing the second time and reports the duplicates as `skipped`. Each run also
+writes one `AuditLog` row (`REMINDERS_RUN`) with its counts, so a scheduler that
+silently stops firing is visible in the audit log rather than inferred from a stale
+calendar.
+
+Delivery is in-app only. Email and SMS are out of scope for this phase: they would
+add a mail or SMS dependency plus provider credentials to a system that runs fully
+offline, along with template, bounce and unsubscribe handling. The iCalendar feed
+already covers "tell me without me visiting the site".
+
+### Running the job
+
+Two equivalent entry points.
+
+**Without HTTP** — a thin runner that calls the service directly, prints the
+summary and exits non-zero on failure:
+
+```bash
+npm run reminders
+# 7-day reminders created:  0
+# 1-day reminders created:  0
+# already sent (skipped):   0
+# events on a horizon:      0
+```
+
+Add `-- --now=YYYY-MM-DD` to run the job as if that were today (UTC). It exists to
+demonstrate and rehearse the job, because the seeded calendar has nothing due on
+most days.
+
+**Over HTTP** — `POST /api/reminders/run` (and `GET`, for manual testing) returns
+the summary as JSON. Both are guarded by a shared secret in `CRON_SECRET`:
+
+| Situation | Response |
+| --- | --- |
+| `CRON_SECRET` not set on the server | `503` — the job does not run at all |
+| Secret missing or wrong | `401` — the job does not run at all |
+| Secret correct | `200` with `{ ok, runAt, t7, t1, skipped, considered, auditLogId }` |
+
+It fails closed: a missing configuration can never turn into an open endpoint that
+anyone can trigger. The secret is compared with `timingSafeEqual`, and is read from
+`Authorization: Bearer <secret>` (what Vercel Cron sends) or `x-cron-secret` —
+never from the query string, because URLs end up in access logs.
+
+Set the variable in `.env` (see `.env.example`) and generate a value with:
+
+```bash
+node -e "console.log(crypto.randomBytes(32).toString('base64url'))"
+```
+
+### Scheduling it
+
+Any of these run the job once a day; daily is enough, because the job is
+idempotent and looks at calendar days.
+
+**Windows Task Scheduler** (adjust the path and time; `schtasks /query /tn "Acadex
+reminders"` shows whether it exists, `schtasks /delete /tn "Acadex reminders" /f`
+removes it):
+
+```bat
+schtasks /create /tn "Acadex reminders" /sc daily /st 06:00 /tr ^
+  "cmd /c cd /d C:\path\to\Acadex && npm run reminders >> reminders.log 2>&1"
+```
+
+**cron** (Linux or macOS, 06:00 daily):
+
+```cron
+0 6 * * * cd /srv/acadex && /usr/bin/npm run reminders >> /var/log/acadex-reminders.log 2>&1
+```
+
+**Vercel Cron** — `vercel.json` in the project root, which sends the secret as a
+bearer token automatically when `CRON_SECRET` is set in the project's environment
+variables:
+
+```json
+{
+  "crons": [{ "path": "/api/reminders/run", "schedule": "0 6 * * *" }]
+}
+```
+
+Schedules are in the platform's timezone (UTC on Vercel); the job itself works in
+UTC calendar days, so a single daily run covers everyone.
+
 ## Verifying it works
 
 ```bash
 npx tsx scripts/verify-phase3.mts   # service layer; no server required
 npm run dev                         # in another terminal
 npx tsx scripts/verify-http.mts     # proxy gating, audience, server actions
+npx tsx scripts/verify-phase4.mts   # feeds, subscribe screen, print view
+npx tsx scripts/verify-phase5.mts   # notification centre, reminders, endpoint
 ```
+
+If the dev server is not on port 3000, point the HTTP scripts at it with
+`BASE_URL`:
+
+```bash
+BASE_URL=http://localhost:3001 npx tsx scripts/verify-http.mts
+```
+
+`verify-phase5.mts` needs `CRON_SECRET` in the server's environment to exercise the
+authorised reminder run; without it the script reports a `SKIP` rather than
+pretending the check passed.
 
 `verify-phase3.mts` drives the service layer directly and inspects the database
 after every step: draft, publish, reschedule (including who was notified and who
@@ -253,7 +381,22 @@ what only exists over HTTP: proxy gating for anonymous and student visitors,
 every admin screen rendering, the audience model on the public calendar, and the
 server actions themselves (create, reject, delete).
 
-Both print one PASS/FAIL line per assertion. The audit log is append-only by
+`verify-phase4.mts` checks the iCalendar wire format against hand-written fixtures
+(CRLF, 75-octet folding, TEXT escaping, exclusive `DTEND`, floating times,
+`SEQUENCE`) and then the feeds, subscribe screen and print view over HTTP.
+
+`verify-phase5.mts` drives the notification service directly (create, dedupe, list,
+count, mark one read, mark all read, and that one account can never touch another's
+notices), then the reminder job over temporary events created exactly seven days and
+one day out — asserting who was reminded, what the notices say, that a second run
+creates nothing, and that department-scoped and staff-only events reach exactly the
+right people. Finally it checks the HTTP surface: the redirect for anonymous
+visitors, the header's unread badge against the database, a mark-as-read POST
+driven as a no-JS browser would drive it, and the reminder endpoint's 401/503/200
+behaviour. It removes every row it created and restores every read flag it flipped,
+so the closing count comparison is against the state it found.
+
+They print one PASS/FAIL line per assertion. The audit log is append-only by
 design, so these scripts deliberately do not roll that table back.
 
 ## Data honesty

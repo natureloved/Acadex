@@ -34,6 +34,25 @@ export const REVISION_TYPES = [
 ] as const;
 export type RevisionType = (typeof REVISION_TYPES)[number];
 
+/**
+ * Notification kinds.
+ *
+ * `REMINDER_T7` and `REMINDER_T1` are the scheduled ones — one week and one day
+ * before an event starts. They are written at most once per (user, event, type),
+ * which is what makes re-running the reminder job harmless. The `EVENT_*` values
+ * are raised by the event service when the registry moves or cancels a date, and
+ * the bare `REMINDER` is kept for notices written without a horizon (the seed
+ * uses it).
+ */
+export const NOTIFICATION_TYPES = [
+  "EVENT_RESCHEDULED",
+  "EVENT_CANCELLED",
+  "REMINDER_T7",
+  "REMINDER_T1",
+  "REMINDER",
+] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
 /** Undergraduate levels offered by LASU. */
 export const LEVELS = [100, 200, 300, 400, 500] as const;
 
@@ -75,6 +94,14 @@ export const REVISION_LABELS: Record<RevisionType, string> = {
   CANCELLED: "Cancelled",
 };
 
+export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
+  EVENT_RESCHEDULED: "Rescheduled",
+  EVENT_CANCELLED: "Cancelled",
+  REMINDER_T7: "One week to go",
+  REMINDER_T1: "Tomorrow",
+  REMINDER: "Reminder",
+};
+
 /** Tailwind classes for the role badge in the header. */
 export const ROLE_BADGE_CLASSES: Record<Role, string> = {
   ADMIN: "bg-purple-100 text-purple-800 ring-purple-600/20",
@@ -89,5 +116,12 @@ export function isRole(value: unknown): value is Role {
 export function isEventStatus(value: unknown): value is EventStatus {
   return (
     typeof value === "string" && (EVENT_STATUSES as readonly string[]).includes(value)
+  );
+}
+
+export function isNotificationType(value: unknown): value is NotificationType {
+  return (
+    typeof value === "string" &&
+    (NOTIFICATION_TYPES as readonly string[]).includes(value)
   );
 }

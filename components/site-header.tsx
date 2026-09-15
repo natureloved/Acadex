@@ -3,16 +3,23 @@ import Link from "next/link";
 import { RoleBadge } from "@/components/ui";
 import { logoutAction } from "@/lib/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
+import { unreadCount } from "@/lib/services/notifications";
 
 /**
  * Site header — server rendered, so the signed-in user's name and role are
  * available on first paint without a client fetch.
  *
  * The "Sign out" control is a real form posting to a server action, which means
- * logging out works even with JavaScript disabled.
+ * logging out works even with JavaScript disabled. The notification count is read
+ * on the server for the same reason: a badge that only appeared after a client
+ * fetch would be missing for anyone on a slow connection, and the page it links
+ * to has to be usable without JavaScript anyway.
  */
 export async function SiteHeader() {
   const user = await getCurrentUser();
+
+  // Only signed-in users have notices, and only they pay for the count query.
+  const unread = user ? await unreadCount(user.id) : 0;
 
   const navLink =
     "rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900";
@@ -36,6 +43,22 @@ export async function SiteHeader() {
           <Link href="/calendar" className={navLink}>
             Calendar
           </Link>
+          {user ? (
+            <Link href="/notifications" className={navLink}>
+              Notifications
+              {/* At zero there is no badge at all: an empty chip is noise, and a
+                  badge that is always present stops meaning "something is
+                  waiting for you". */}
+              {unread > 0 ? (
+                <span
+                  aria-label={`${unread} unread`}
+                  className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-blue-700 px-1.5 py-0.5 text-xs font-semibold text-white"
+                >
+                  {unread}
+                </span>
+              ) : null}
+            </Link>
+          ) : null}
           {user?.role === "ADMIN" ? (
             <Link href="/admin" className={navLink}>
               Admin
