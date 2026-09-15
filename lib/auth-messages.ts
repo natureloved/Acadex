@@ -8,6 +8,13 @@
 export const AUTH_ERRORS = {
   missing: "Enter both your email address and password.",
   invalid: "Those credentials are not correct. Please try again.",
+  /**
+   * Deliberately identical in shape to `invalid`: a throttled attacker learns
+   * only that they have been making too many attempts, never whether the address
+   * exists.
+   */
+  throttled:
+    "Too many failed sign-in attempts for that address. Please wait a few minutes and try again.",
   email_taken: "An account already exists with that email address.",
   weak_password:
     "Password must be at least 8 characters and include a letter and a number.",

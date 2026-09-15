@@ -7,12 +7,12 @@
  * endpoint, so the HTML form's `required` attributes and the proxy's route
  * matcher are conveniences, not security boundaries.
  *
- * Note the shape of these functions — `redirect()` throws (Next.js signals a
+ * Note the shape of these functions - `redirect()` throws (Next.js signals a
  * redirect with a special error), so it is always called *outside* try/catch.
  */
 import { randomUUID } from "node:crypto";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { safeInternalPath } from "@/lib/auth";
@@ -21,6 +21,13 @@ import { isRole, LEVELS } from "@/lib/constants";
 import { authenticate } from "@/lib/credentials";
 import { hashPassword, validatePasswordStrength } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import {
+  clearFailedAttempts,
+  clientIp,
+  lockoutState,
+  normaliseIdentifier,
+  recordLoginAttempt,
+} from "@/lib/services/login-attempts";
 import {
   SESSION_COOKIE_NAME,
   sessionCookieOptions,
@@ -59,6 +66,20 @@ async function startSession(user: {
 // Log in
 // ---------------------------------------------------------------------------
 
+/**
+ * Sign in, with brute-force throttling.
+ *
+ * The order of operations matters and is the point of this function:
+ *
+ *  1. Check the lockout **before** touching the credentials, so a locked-out
+ *     attacker cannot use response timing to probe passwords at all.
+ *  2. A blocked attempt is audited but **not counted as a failure** - otherwise
+ *     every blocked retry would push the window forward and the lockout would
+ *     never expire.
+ *  3. A wrong password counts as a failure and is audited.
+ *  4. A correct password clears the identifier's failures, records the success,
+ *     issues the session and is audited.
+ */
 export async function loginAction(formData: FormData): Promise<void> {
   const email = text(formData, "email");
   const password = String(formData.get("password") ?? "");
@@ -68,19 +89,46 @@ export async function loginAction(formData: FormData): Promise<void> {
     redirect(`/login?error=missing&next=${encodeURIComponent(next)}`);
   }
 
+  const identifier = normaliseIdentifier(email);
+  const ip = clientIp(await headers());
+
+  const lockout = await lockoutState(identifier);
+
+  if (lockout.locked) {
+    await prisma.auditLog.create({
+      data: {
+        action: "LOGIN_BLOCKED",
+        entity: "User",
+        metaJson: JSON.stringify({
+          identifier,
+          ip,
+          failures: lockout.failures,
+          retryAfterSeconds: lockout.retryAfterSeconds,
+        }),
+      },
+    });
+
+    redirect(`/login?error=throttled&next=${encodeURIComponent(next)}`);
+  }
+
   const user = await authenticate(email, password);
 
   if (!user) {
+    await recordLoginAttempt({ identifier, ip, succeeded: false });
+
     await prisma.auditLog.create({
       data: {
         action: "LOGIN_FAILED",
         entity: "User",
-        metaJson: JSON.stringify({ email }),
+        metaJson: JSON.stringify({ identifier, ip }),
       },
     });
+
     redirect(`/login?error=invalid&next=${encodeURIComponent(next)}`);
   }
 
+  await clearFailedAttempts(identifier);
+  await recordLoginAttempt({ identifier, ip, succeeded: true });
   await startSession(user);
 
   await prisma.auditLog.create({

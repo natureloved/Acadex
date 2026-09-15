@@ -256,3 +256,30 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
 }
+
+/// One attempt against the sign-in form, successful or not.
+///
+/// This table exists so that brute-force throttling survives a restart: an
+/// in-process counter is cleared by every deploy, crash or `next dev` reload —
+/// which is precisely when an attacker would retry.
+///
+/// `identifier` is the email *as typed*, lowercased and trimmed, and is
+/// deliberately NOT a foreign key to `User`: an attempt against an address that
+/// does not exist must be recorded and throttled exactly like one that does,
+/// otherwise the response time and the lockout behaviour would disclose which
+/// accounts are real.
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  identifier String
+  /// Best-effort client address (see `clientIp()` in lib/services/login-attempts.ts).
+  /// Recorded for the audit trail; the lockout decision does not trust it.
+  ip         String
+  succeeded  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  /// The only index the limiter needs: failures for one identifier since a
+  /// timestamp.
+  @@index([identifier, createdAt])
+  /// For the periodic prune of attempts older than the retention window.
+  @@index([createdAt])
+}

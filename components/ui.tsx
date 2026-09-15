@@ -192,7 +192,18 @@ export const buttonPrimary =
 export const buttonSecondary =
   "inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-800 ring-1 ring-slate-300 transition hover:bg-slate-50";
 
+/**
+ * Shared form control styling.
+ *
+ * The ring and the placeholder are deliberately darker than the decorative
+ * hairlines used elsewhere (slate-300 / slate-400). A form control border is
+ * not decoration: WCAG 1.4.11 asks for 3:1 against the adjacent colour for
+ * the boundary that identifies a control, and slate-300 on white measures
+ * about 1.6:1. slate-500 measures about 4.5:1, which clears both 1.4.11 and
+ * the placeholder contrast requirement in 1.4.3. The measured ratios are
+ * asserted by scripts/verify-phase6.mts.
+ */
 export const inputClasses =
-  "block w-full rounded-md border-0 bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-700";
+  "block w-full rounded-md border-0 bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-inset ring-slate-500 placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-blue-700";
 
 export const labelClasses = "block text-sm font-medium text-slate-800";

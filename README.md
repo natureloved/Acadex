@@ -120,7 +120,7 @@ lib/                      Data access and domain logic
   auth.ts                 Role checks (server-only, enforced on every request)
   db.ts                   Prisma client, framework-free so scripts can use it
   services/               Business rules: event lifecycle, sessions, categories,
-                          CSV import, iCalendar feeds and notifications/reminders.
+                          CSV import, feeds, notifications and sign-in throttling.
                           No framework imports, so the verify scripts exercise
                           them directly
   actions/                Server actions: resolve the user, then call a service
@@ -134,10 +134,13 @@ prisma/
                           subscriptions, notifications, audit log
   migrations/             Versioned SQLite migration history
   seed.ts                 Idempotent demo-data seed (two sessions)
+app/error.tsx             Error boundary: shows a digest, never a stack trace
+app/not-found.tsx         404 page (a withdrawn date is a 404 on purpose)
+app/api/diagnostics/      Development-only query counter, used by the measurer
 proxy.ts                  Coarse route protection for /admin and /staff
 scripts/                  Verification scripts (see "Verifying it works")
 public/csv-import-template.csv  Downloadable template for the CSV importer
-docs/                     ACADEX-PLAN.md (approved plan) and seed-data-sources.md
+docs/                     ACADEX-PLAN.md, seed-data-sources.md, security-checklist.md
 ```
 
 ## Available scripts
@@ -160,6 +163,8 @@ docs/                     ACADEX-PLAN.md (approved plan) and seed-data-sources.m
 | `npx tsx scripts/verify-http.mts` | Proxy, audience and action checks (dev server running) |
 | `npx tsx scripts/verify-phase4.mts` | Feeds, subscribe screen and print view (dev server running) |
 | `npx tsx scripts/verify-phase5.mts` | Notifications, the reminder job and the endpoint (dev server running) |
+| `npx tsx scripts/verify-phase6.mts` | Headers, throttling, limits, accessibility, contrast |
+| `npx tsx scripts/measure-performance.mts` | Page sizes, timings and the query count |
 | `npx tsx scripts/smoke-db.mts` | Quick check that the database layer opens |
 
 ## Managing the calendar (admin)
@@ -398,6 +403,40 @@ so the closing count comparison is against the state it found.
 
 They print one PASS/FAIL line per assertion. The audit log is append-only by
 design, so these scripts deliberately do not roll that table back.
+
+## Security, accessibility and performance
+
+The point of this section is that the claims are measured rather than asserted.
+
+**Security.** Response headers are set for every route in `next.config.ts`: a
+Content-Security-Policy, `nosniff`, `Referrer-Policy`, `X-Frame-Options`,
+`Permissions-Policy`, and HSTS plus `upgrade-insecure-requests` in production only
+(sending HSTS over plain-HTTP localhost would pin every other project on the machine
+to HTTPS). Sign-in is throttled after five failed attempts for one address within
+fifteen minutes, recorded in the database so the lockout survives a restart rather
+than being cleared by the next deploy.
+
+The full picture - assets, actors, every control with the file it lives in, the risks
+that are accepted on purpose, and what a real deployment would still need - is in
+[`docs/security-checklist.md`](docs/security-checklist.md).
+
+**Accessibility.** A skip link and a `main` landmark on every page, an accessible
+name on the unread badge, and a contrast audit that computes the WCAG ratio for each
+foreground/background pair the UI uses, from Tailwind's own palette values. Body text
+measures 4.77:1 to 17.84:1 and the status badges 4.87:1 to 5.51:1. The form-control
+border was changed from `slate-300` (about 1.6:1, failing WCAG 1.4.11) to `slate-500`
+(4.77:1), which is why the inputs look slightly darker than before.
+
+**Performance.** On the production build the public calendar is **60 KB of HTML and
+7.0 KB gzipped** - roughly 0.15 s of transfer on a 400 kbit/s connection - and its
+data path runs **4 database queries**. A future N+1 would show up in
+`scripts/measure-performance.mts` rather than being discovered by a student on a
+phone.
+
+```bash
+npx tsx scripts/verify-phase6.mts         # headers, throttling, limits, a11y, contrast
+npx tsx scripts/measure-performance.mts   # sizes, timings and the query count
+```
 
 ## Data honesty
 

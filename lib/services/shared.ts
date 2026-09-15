@@ -113,6 +113,15 @@ export function combineDateAndTime(
 export type TargetRef = { targetType: TargetType; targetId: string };
 
 /**
+ * The most audience entries one event may carry.
+ *
+ * The form renders one checkbox per faculty, department and level, so a
+ * legitimate selection is bounded by the institution itself; the cap exists
+ * because a hand-crafted POST is not limited by what the form renders.
+ */
+export const MAX_TARGETS = 60;
+
+/**
  * Validate the audience selection for a scoped event.
  *
  * Level targets are checked against the LEVELS constant; faculty and department
@@ -124,6 +133,13 @@ export async function validateTargets(
   rawIds: string[],
 ): Promise<{ ok: true; targets: TargetRef[] } | { ok: false; errors: string[] }> {
   const unique = Array.from(new Set(rawIds.map((id) => id.trim()).filter(Boolean)));
+
+  if (unique.length > MAX_TARGETS) {
+    return {
+      ok: false,
+      errors: [`Choose at most ${MAX_TARGETS} audience entries for one event.`],
+    };
+  }
 
   if (scope === "ALL") return { ok: true, targets: [] };
 
