@@ -99,17 +99,22 @@ All three accounts share the password **`Password123!`**:
 app/                      Next.js App Router pages
   page.tsx                Landing page (active session summary)
   calendar/               Public agenda + per-event detail with revision history
+  calendar/print/         Print / save-as-PDF view of a session or semester
+  calendar/[id]/ics/      "Download this event" as a one-event .ics file
   login/ register/ logout Auth pages and logout route
   admin/                  Admin screens: dashboard, events, sessions,
                           categories, CSV import and the audit log (ADMIN only)
   staff/                  Staff view scoped to faculty/department/level
+  ics/[token]/            .ics subscription feeds (the token is the credential)
+  subscribe/              Subscribe screen: feed address, instructions, rotate
 components/               Shared UI: agenda items, chips, badges, revision timeline
 components/admin/         Admin-only UI: sub-navigation, event form, import wizard
 lib/                      Data access and domain logic
   auth.ts                 Role checks (server-only, enforced on every request)
   db.ts                   Prisma client, framework-free so scripts can use it
-  services/               Business rules (event lifecycle, sessions, categories,
-                          CSV import). No framework imports: testable from Node
+  services/               Business rules: event lifecycle, sessions, categories,
+                          CSV import and iCalendar feeds. No framework imports,
+                          so the verify scripts exercise them directly
   actions/                Server actions: resolve the user, then call a service
   events.ts               Event queries — the single "who may see what" rule
   constants.ts            String "enums" (SQLite has no native enums)
@@ -144,6 +149,7 @@ docs/                     ACADEX-PLAN.md (approved plan) and seed-data-sources.m
 | `npm run setup` | Migrate + generate + seed in one step |
 | `npx tsx scripts/verify-phase3.mts` | Service-layer regression test (no server needed) |
 | `npx tsx scripts/verify-http.mts` | Proxy, audience and action checks (dev server running) |
+| `npx tsx scripts/verify-phase4.mts` | Feeds, subscribe screen and print view (dev server running) |
 | `npx tsx scripts/smoke-db.mts` | Quick check that the database layer opens |
 
 ## Managing the calendar (admin)
@@ -184,6 +190,49 @@ semester `FIRST` or `SECOND`, category matched by name). It parses and validates
 first, listing any row it would skip and why; nothing is written until you
 confirm. Imported events arrive as drafts unless you tick "publish immediately".
 A template ships at `public/csv-import-template.csv`.
+
+## Subscribing to the calendar
+
+Nobody should have to visit a website to learn that an examination moved. Acadex
+publishes iCalendar (RFC 5545) feeds, so the subscriber's own calendar application
+keeps itself current, corrections and cancellations included.
+
+| Feed | Address | Who it is for |
+| --- | --- | --- |
+| Personal | `/ics/<your-token>.ics` | One person: whole-university dates plus their faculty, department and level |
+| Public | `/ics/public.ics` | Anyone, no account: whole-university dates only |
+| Single event | `/calendar/<id>/ics` | "Download this event", from its detail page |
+
+Sign in and open **Subscribe** (`/subscribe`) for your own address, a one-click
+`webcal://` link, and step-by-step instructions for Google Calendar, Outlook and
+Apple Calendar.
+
+**The address is the credential.** Calendar clients cannot present a login form, so
+the feed route is public and the token in the URL is what authorises it - the same
+"secret address" model Google and Outlook use for their own calendars. Anyone holding
+the link can read that one person's feed, which is why the Subscribe screen says so
+plainly and offers a button that regenerates the address and kills the old one.
+
+Two details are what make the feed trustworthy rather than merely present:
+
+- **A moved date propagates.** Every entry carries `SEQUENCE`, `LAST-MODIFIED` and a
+  description saying that it was rescheduled, so the client replaces the date it
+  already had instead of quietly keeping the old one.
+- **A cancellation propagates.** Cancelled events keep being advertised for 90 days
+  with `STATUS:CANCELLED` and a higher `SEQUENCE`, which is what tells a client to
+  remove the entry. Without that, a withdrawn date would linger in people's calendars
+  indefinitely.
+
+`SEQUENCE` is derived from each event's append-only revision *count* rather than its
+revision *number*, because only a monotonic value is respected by clients: cancelling
+and then restoring an event moves no dates, so a number derived from the date-move
+counter would go **down** and be ignored, leaving the event cancelled in every
+subscriber's calendar. `scripts/verify-phase4.mts` section 14 pins that behaviour down.
+
+A print view lives at `/calendar/print` (optionally with `?session=` or `?semester=`),
+laid out for paper with a "Print / save as PDF" button. That uses the browser's own
+PDF engine, so there is no dependency to install and no server-side rendering service
+to run.
 
 ## Verifying it works
 

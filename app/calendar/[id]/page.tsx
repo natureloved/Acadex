@@ -3,15 +3,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { RevisionTimeline } from "@/components/revision-timeline";
-import { CategoryChip, RescheduledFlag, ScopeNote, StatusBadge } from "@/components/ui";
+import {
+  buttonSecondary,
+  CategoryChip,
+  RescheduledFlag,
+  ScopeNote,
+  StatusBadge,
+} from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { SEMESTER_LABELS, type SemesterType } from "@/lib/constants";
 import {
   getEventForViewer,
   listEventRevisions,
   listEventTargets,
+  viewerFrom,
 } from "@/lib/events";
 import { formatDate, formatDateRange } from "@/lib/format";
+import { buildGoogleCalendarUrl } from "@/lib/services/ics";
 
 export const dynamic = "force-dynamic";
 
@@ -24,20 +32,9 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { id } = await props.params;
   const viewer = await getCurrentUser();
-  const event = await getEventForViewer(
-    id,
-    viewer
-  ? {
-      role: viewer.role,
-      facultyId: viewer.facultyId,
-      departmentId: viewer.departmentId,
-      level: viewer.level,
-    }
-  : null,
-  );
+  const event = await getEventForViewer(id, viewerFrom(viewer));
 
   if (!event) return { title: "Event not found" };
-
   return {
     title: event.title,
     description:
@@ -50,17 +47,7 @@ export default async function EventDetailPage(props: PageProps<"/calendar/[id]">
   const { id } = await props.params;
   const viewer = await getCurrentUser();
 
-  const event = await getEventForViewer(
-    id,
-    viewer
-  ? {
-      role: viewer.role,
-      facultyId: viewer.facultyId,
-      departmentId: viewer.departmentId,
-      level: viewer.level,
-    }
-  : null,
-  );
+  const event = await getEventForViewer(id, viewerFrom(viewer));
 
   // Drafts, cancelled events and staff-only notices all land here for an
   // unauthorised viewer: a 404 reveals nothing about whether the id exists.
@@ -145,6 +132,28 @@ export default async function EventDetailPage(props: PageProps<"/calendar/[id]">
           ) : null}
         </p>
       </header>
+
+      {/* ---- Add to calendar ------------------------------------------- */}
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <a
+          href={buildGoogleCalendarUrl(event)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonSecondary}
+        >
+          Add to Google Calendar
+        </a>
+        <a href={`/calendar/${event.id}/ics`} className={buttonSecondary}>
+          Download .ics
+        </a>
+        <Link href="/subscribe" className={buttonSecondary}>
+          Subscribe to all dates
+        </Link>
+      </div>
+      <p className="mt-2 text-xs text-slate-500">
+        The download works with Outlook, Apple Calendar and any other application
+        that understands the iCalendar format.
+      </p>
 
       {wasRescheduled ? (
         <section

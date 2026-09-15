@@ -32,8 +32,46 @@ body {
   border-radius: 2px;
 }
 
+/*
+ * Print / "Save as PDF" rules.
+ *
+ * A printed calendar should be a document, not a screenshot of a website: the
+ * site header, the footer and every button are removed (the print view's own
+ * "Print" button included — hence `button` as well as `.no-print`), the page is
+ * allowed to use the full sheet, and month blocks are kept off a page break so a
+ * month is never split across two sheets.
+ */
 @media print {
-  .no-print {
+  body > header,
+  body > footer,
+  .no-print,
+  button {
     display: none !important;
   }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  main {
+    max-width: none;
+    padding: 0;
+  }
+
+  a {
+    /* Link targets are meaningless on paper; keep the text, drop the colour. */
+    color: #000;
+    text-decoration: none;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+
+  h2 {
+    break-after: avoid;
+  }
 }
+

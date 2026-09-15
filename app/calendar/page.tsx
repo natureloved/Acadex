@@ -16,6 +16,7 @@ import {
   getSemesterOptions,
   getSessionOptions,
   listAgenda,
+  viewerFrom,
 } from "@/lib/events";
 import { formatMonthHeading, monthKey } from "@/lib/format";
 import { firstParam } from "@/lib/params";
@@ -61,14 +62,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
       categorySlug,
       q: query,
       range,
-      viewer: viewer
-  ? {
-      role: viewer.role,
-      facultyId: viewer.facultyId,
-      departmentId: viewer.departmentId,
-      level: viewer.level,
-    }
-  : null,
+      viewer: viewerFrom(viewer),
     }),
     getSessionOptions(),
     getSemesterOptions(),
@@ -108,12 +102,43 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         ? "past"
         : "";
 
+  // "Print / save as PDF" keeps whichever session or semester the reader is
+  // looking at, so what they print is what they were reading.
+  const printParams = new URLSearchParams();
+  if (sessionId) printParams.set("session", sessionId);
+  if (semesterId) printParams.set("semester", semesterId);
+  const printHref = printParams.size
+    ? `/calendar/print?${printParams.toString()}`
+    : "/calendar/print";
+
   return (
     <div>
       <PageHeading
         title="Academic calendar"
         description="Published dates across every LASU academic session — upcoming events first. Draft events are never shown here."
       />
+
+      {/* ---- Subscribe / print ----------------------------------------- */}
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+        <p className="text-sm text-slate-600">
+          Subscribe once and every published date, correction and cancellation
+          arrives in your own calendar automatically. Or take a printable copy of
+          the session.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Link href="/subscribe" className={buttonSecondary}>
+            Subscribe to this calendar
+          </Link>
+          {/* A plain anchor: this is a file, not a page, so client-side
+              navigation would be wrong. */}
+          <a href="/ics/public.ics" className={buttonSecondary}>
+            Public feed (.ics)
+          </a>
+          <Link href={printHref} className={buttonSecondary}>
+            Print / save as PDF
+          </Link>
+        </div>
+      </div>
 
       {forbidden ? (
         <p
