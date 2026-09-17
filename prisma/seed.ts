@@ -40,7 +40,9 @@
 import "dotenv/config";
 
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { Pool } from "pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client";
 
@@ -49,7 +51,11 @@ if (!url) {
   throw new Error("DATABASE_URL is not set. Copy .env.example to .env first.");
 }
 
-const prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url }) });
+const adapter =
+  url.startsWith("postgres://") || url.startsWith("postgresql://")
+    ? new PrismaPg(new Pool({ connectionString: url }))
+    : new PrismaBetterSqlite3({ url });
+const prisma = new PrismaClient({ adapter });
 
 /** Build a UTC-midnight date so stored calendar days never shift by timezone. */
 const d = (iso: string): Date => new Date(`${iso}T00:00:00.000Z`);
