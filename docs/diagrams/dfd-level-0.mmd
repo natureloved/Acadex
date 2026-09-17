@@ -1,0 +1,23 @@
+graph TD
+  Student["Student / Public Users"]
+  Staff["Departmental Staff / Exam Officers"]
+  Admin["Academic Registrar / Central Registry"]
+  Clients["External Calendar Clients (RFC 5545)"]
+
+  System(("0.0<br/>Acadex Academic Calendar<br/>Management System"))
+
+  Student -->|"Calendar Query & Filter Criteria"| System
+  System -->|"Published Academic Schedule & Countdown"| Student
+  System -->|"Personalized Notification Alerts (T-7, T-1)"| Student
+
+  Staff -->|"Departmental Event Proposals & Venue Requests"| System
+  System -->|"Proposal Status & Administrative Feedback"| Staff
+  System -->|"Staff In-Scope Agenda (Staff-Only Notices)"| Staff
+
+  Admin -->|"Calendar Definitions, Sessions & Categories"| System
+  Admin -->|"Venue Registrations & Capacity Data"| System
+  Admin -->|"Approval Decisions & Reschedule Updates"| System
+  Admin -->|"Bulk CSV Event Rosters"| System
+  System -->|"Conflict Warnings, Audit Logs & Pending Queues"| Admin
+
+  System -->|"Live RFC 5545 .ics Synchronization Feed"| Clients

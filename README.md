@@ -165,6 +165,7 @@ docs/                     ACADEX-PLAN.md, seed-data-sources.md, security-checkli
 | `npx tsx scripts/verify-phase5.mts` | Notifications, the reminder job and the endpoint (dev server running) |
 | `npx tsx scripts/verify-phase6.mts` | Headers, throttling, limits, accessibility, contrast |
 | `npx tsx scripts/measure-performance.mts` | Page sizes, timings and the query count |
+| `npx tsx scripts/verify-deployment.mts` | Deployment smoke test against a running target |
 | `npx tsx scripts/smoke-db.mts` | Quick check that the database layer opens |
 
 ## Managing the calendar (admin)
@@ -403,6 +404,29 @@ so the closing count comparison is against the state it found.
 
 They print one PASS/FAIL line per assertion. The audit log is append-only by
 design, so these scripts deliberately do not roll that table back.
+
+## Deploying
+
+Short version: **SQLite for local development and marking, Postgres for a
+deployed instance.** SQLite cannot serve a serverless host (the filesystem is
+ephemeral and read-only) and Prisma migration files are provider-specific, so
+the two paths live side by side rather than one replacing the other. The full
+runbook - which files differ between the two, the environment variables, the
+cron configuration for the reminder job, rollback and backup, and a "before
+this is public" checklist - is in [`docs/deployment.md`](docs/deployment.md).
+
+Once something is running - a local production build now, a real deployment
+later - verify it from the outside:
+
+```bash
+npm run build && npm run start -- -p 3100
+BASE_URL=http://localhost:3100 npx tsx scripts/verify-deployment.mts
+```
+
+The smoke test checks the health endpoint, the public pages, the `.ics` feed,
+that the admin area refuses anonymous visitors, the security headers, that HSTS
+appears only over HTTPS, and that the sign-in page **does not advertise the demo
+credentials** on a production target. It writes nothing.
 
 ## Security, accessibility and performance
 

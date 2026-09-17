@@ -11,7 +11,11 @@ export const metadata = {
   title: "Sign in",
 };
 
-/** Demo accounts created by prisma/seed.ts — remove for a real deployment. */
+/**
+ * Demo accounts created by prisma/seed.ts.
+ *
+ * Rendered only outside production : see the guard around the panel below.
+ */
 const DEMO_ACCOUNTS = [
   { role: "Administrator", email: "admin@acadex.lasu.edu.ng" },
   { role: "Staff", email: "staff@acadex.lasu.edu.ng" },
@@ -30,15 +34,17 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900">Sign in</h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Sign in to manage the calendar or to see staff-only notices.
+      <h1 className="font-['Fraunces'] text-2xl font-medium tracking-tight text-[var(--ink)] sm:text-3xl">
+        Sign in
+      </h1>
+      <p className="mt-1.5 text-sm text-[var(--ink-2)]">
+        Sign in to access your academic calendar and campus notices.
       </p>
 
       {message ? (
         <p
           role="alert"
-          className="mt-5 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-800 ring-1 ring-rose-600/20"
+          className="mt-5 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-900 ring-1 ring-rose-600/30"
         >
           {message}
         </p>
@@ -82,33 +88,40 @@ export default async function LoginPage(props: PageProps<"/login">) {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-5 text-sm text-[var(--ink-2)]">
         New student?{" "}
-        <Link href="/register" className="font-semibold text-blue-700 hover:underline">
+        <Link href="/register" className="font-semibold text-[var(--green)] hover:underline">
           Create an account
         </Link>
       </p>
 
-      {/* Clearly marked as seed data so it is never mistaken for production. */}
-      <aside className="mt-8 rounded-lg border border-dashed border-slate-300 bg-white p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Demo accounts (seed data)
-        </h2>
-        <p className="mt-1 text-xs text-slate-600">
-          Password for every demo account:{" "}
-          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.8rem]">
-            Password123!
-          </code>
-        </p>
-        <ul className="mt-2 space-y-1 text-xs text-slate-700">
-          {DEMO_ACCOUNTS.map((account) => (
-            <li key={account.email} className="flex flex-wrap gap-x-2">
-              <span className="font-medium">{account.role}:</span>
-              <code className="font-mono">{account.email}</code>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      {/*
+        Demo credentials are a development affordance, not documentation: a
+        deployed instance must never advertise a working administrator password.
+        The test is NODE_ENV rather than a bespoke flag, so a production build
+        cannot ship with the panel switched on by accident.
+      */}
+      {process.env.NODE_ENV !== "production" ? (
+        <aside className="mt-8 rounded-2xl border border-dashed border-[var(--line-strong)] bg-[var(--card)] p-5 shadow-2xs">
+          <h2 className="font-['Spline_Sans_Mono'] text-xs font-semibold uppercase tracking-wider text-[var(--green)]">
+            Demo accounts (LASU 2026/2027 Seed Data)
+          </h2>
+          <p className="mt-1 text-xs text-[var(--ink-2)]">
+            Password for every demo account:{" "}
+            <code className="rounded bg-[var(--paper-2)] border border-[var(--line)] px-1.5 py-0.5 font-['Spline_Sans_Mono'] text-[0.8rem] font-semibold text-[var(--ink)]">
+              Password123!
+            </code>
+          </p>
+          <ul className="mt-2.5 space-y-1.5 text-xs text-[var(--ink)]">
+            {DEMO_ACCOUNTS.map((account) => (
+              <li key={account.email} className="flex flex-wrap items-center gap-x-2">
+                <span className="font-semibold text-[var(--ink)]">{account.role}:</span>
+                <code className="font-['Spline_Sans_Mono'] text-[var(--ink-2)]">{account.email}</code>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      ) : null}
     </div>
   );
 }

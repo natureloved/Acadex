@@ -8,6 +8,8 @@ const CHANGE_CLASSES: Record<RevisionType, string> = {
   UPDATED: "bg-sky-50 text-sky-800 ring-sky-600/20",
   PUBLISHED: "bg-emerald-50 text-emerald-800 ring-emerald-600/20",
   RESCHEDULED: "bg-amber-50 text-amber-900 ring-amber-600/20",
+  APPROVED: "bg-emerald-50 text-emerald-800 ring-emerald-600/20",
+  REJECTED: "bg-rose-50 text-rose-800 ring-rose-600/20",
   CANCELLED: "bg-rose-50 text-rose-800 ring-rose-600/20",
 };
 
@@ -20,11 +22,11 @@ function formatSnapshot(
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
   return start.getTime() === end.getTime()
     ? formatDate(start)
-    : `${formatDate(start)} – ${formatDate(end)}`;
+    : `${formatDate(start)} - ${formatDate(end)}`;
 }
 
 /**
- * The event's change history — the feature that turns "reduces confusion about
+ * The event's change history: the feature that turns "reduces confusion about
  * important dates" from a claim into something a marker can actually see.
  */
 export function RevisionTimeline({ revisions }: { revisions: EventRevisionView[] }) {
@@ -49,6 +51,7 @@ export function RevisionTimeline({ revisions }: { revisions: EventRevisionView[]
             key={revision.id}
             className="relative border-l-2 border-slate-200 pl-4 pb-1 last:pb-0"
           >
+            <span className="absolute -left-[5px] top-1.5 size-2 rounded-full bg-slate-400 ring-2 ring-white" />
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${

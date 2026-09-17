@@ -48,3 +48,7 @@ next-env.d.ts
 
 # generated Prisma client (recreated by `npm install` / `npm run db:generate`)
 /lib/generated/prisma
+
+# local agents and skills
+.agents/
+skills-lock.json

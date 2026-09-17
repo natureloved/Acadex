@@ -1,0 +1,123 @@
+erDiagram
+  ACADEMIC_SESSION ||--|{ SEMESTER : "contains"
+  FACULTY ||--|{ DEPARTMENT : "has"
+  FACULTY ||--o{ USER : "enrols"
+  DEPARTMENT ||--o{ USER : "enrols"
+
+  SEMESTER ||--o{ CALENDAR_EVENT : "hosts"
+  EVENT_CATEGORY ||--o{ CALENDAR_EVENT : "classifies"
+  VENUE ||--o{ CALENDAR_EVENT : "accommodates"
+  USER ||--o{ CALENDAR_EVENT : "creates"
+
+  CALENDAR_EVENT ||--o{ EVENT_REVISION : "tracks"
+  CALENDAR_EVENT ||--o{ EVENT_TARGET : "targets"
+  CALENDAR_EVENT ||--o{ NOTIFICATION : "triggers"
+  USER ||--o{ NOTIFICATION : "receives"
+  USER ||--o{ AUDIT_LOG : "initiates"
+
+  ACADEMIC_SESSION {
+    string id PK
+    string name UK
+    datetime startDate
+    datetime endDate
+    boolean isActive
+  }
+
+  SEMESTER {
+    string id PK
+    string sessionId FK
+    string type
+    datetime startDate
+    datetime endDate
+  }
+
+  FACULTY {
+    string id PK
+    string name UK
+    string code UK
+  }
+
+  DEPARTMENT {
+    string id PK
+    string facultyId FK
+    string name
+    string code UK
+  }
+
+  USER {
+    string id PK
+    string email UK
+    string role
+    string facultyId FK
+    string departmentId FK
+    int level
+  }
+
+  VENUE {
+    string id PK
+    string name UK
+    string code UK
+    int capacity
+    string location
+  }
+
+  EVENT_CATEGORY {
+    string id PK
+    string name UK
+    string slug UK
+    string color
+  }
+
+  CALENDAR_EVENT {
+    string id PK
+    string semesterId FK
+    string categoryId FK
+    string venueId FK
+    string createdById FK
+    string title
+    string description
+    datetime startAt
+    datetime endAt
+    boolean allDay
+    string status
+    string visibility
+    string scope
+    int version
+  }
+
+  EVENT_REVISION {
+    string id PK
+    string eventId FK
+    string changedById FK
+    string changeType
+    string note
+    string diffJson
+    datetime changedAt
+  }
+
+  EVENT_TARGET {
+    string id PK
+    string eventId FK
+    string targetType
+    string targetId
+  }
+
+  NOTIFICATION {
+    string id PK
+    string userId FK
+    string eventId FK
+    string type
+    string message
+    boolean read
+    datetime createdAt
+  }
+
+  AUDIT_LOG {
+    string id PK
+    string actorId FK
+    string action
+    string entity
+    string entityId
+    string metaJson
+    datetime createdAt
+  }

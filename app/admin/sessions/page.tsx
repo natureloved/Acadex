@@ -25,7 +25,7 @@ export const metadata = { title: "Sessions" };
 export const dynamic = "force-dynamic";
 
 const DANGER_BUTTON =
-  "inline-flex items-center justify-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-rose-800 ring-1 ring-rose-300 transition hover:bg-rose-50";
+  "inline-flex items-center justify-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-rose-800 ring-1 ring-rose-300 transition-all duration-150 hover:bg-rose-50 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600";
 
 /**
  * Sessions and semesters.
@@ -155,7 +155,7 @@ export default async function AdminSessionsPage(
                   </span>
                 )}
                 <p className="text-sm text-slate-600">
-                  {formatDate(session.startDate)} &ndash; {formatDate(session.endDate)}
+                  {formatDate(session.startDate)} - {formatDate(session.endDate)}
                   {" · "}
                   {session.eventCount} event{session.eventCount === 1 ? "" : "s"}
                 </p>
@@ -166,7 +166,7 @@ export default async function AdminSessionsPage(
                       <input type="hidden" name="sessionId" value={session.id} />
                       <button
                         type="submit"
-                        className="inline-flex items-center justify-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 ring-1 ring-slate-300 transition hover:bg-slate-100"
+                        className="inline-flex items-center justify-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 ring-1 ring-slate-300 transition-all duration-150 hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                       >
                         Make active
                       </button>
@@ -229,7 +229,7 @@ export default async function AdminSessionsPage(
                                 semester.type}
                             </td>
                             <td className="whitespace-nowrap px-3 py-3 text-slate-700">
-                              {formatDate(semester.startDate)} &ndash;{" "}
+                              {formatDate(semester.startDate)} -{" "}
                               {formatDate(semester.endDate)}
                             </td>
                             <td className="px-3 py-3 tabular-nums text-slate-700">

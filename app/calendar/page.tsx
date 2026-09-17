@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { EventAgendaItem } from "@/components/event-agenda-item";
+import { MonthGrid } from "@/components/month-grid";
 import {
   buttonPrimary,
   buttonSecondary,
@@ -25,24 +27,21 @@ import type { EventCard } from "@/lib/events";
 export const metadata = {
   title: "Academic calendar",
   description:
-    "Every published date on the LASU academic calendar — upcoming events first, with the full session archive one click away.",
+    "Every published date on the LASU academic calendar: interactive monthly grid and upcoming agenda view.",
 };
 
 /**
  * Public calendar.
  *
- * A plain GET form performs the filtering, so the page works with no client
- * JavaScript at all: the browser navigates to /calendar?session=…&range=…&q=…
- * and the server renders the result. That keeps the page usable on a low-end
- * phone and makes every filtered view a shareable URL.
- *
- * The default view is `range=upcoming`: events that have not finished yet.
- * The archived 2025/2026 session never dominates the landing view, but it
- * stays reachable through the Session filter, the Semester filter, or the
- * "browse the archive" link below the filters.
+ * Supports both an interactive 7-column Month Grid (default) and chronological
+ * Agenda List view. Filtering works with no client JavaScript required: the browser
+ * navigates with GET query parameters, keeping every view bookmarkable and shareable.
  */
 export default async function CalendarPage(props: PageProps<"/calendar">) {
   const searchParams = await props.searchParams;
+
+  const viewRaw = firstParam(searchParams.view);
+  const view = viewRaw === "agenda" ? "agenda" : "month";
 
   const sessionId = firstParam(searchParams.session);
   const semesterId = firstParam(searchParams.semester);
@@ -52,8 +51,28 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
   const range = rangeRaw === "past" || rangeRaw === "all" ? rangeRaw : "upcoming";
   const forbidden = firstParam(searchParams.error) === "forbidden";
   const welcome = firstParam(searchParams.welcome) === "1";
+  const selectedDay = firstParam(searchParams.day);
+
+  // Month navigation
+  const monthParam = firstParam(searchParams.month);
+  const now = new Date();
+  let year = now.getUTCFullYear();
+  let monthIndex = now.getUTCMonth();
+
+  if (monthParam) {
+    const parts = monthParam.split("-");
+    const parsedYear = Number(parts[0]);
+    const parsedMonth = Number(parts[1]);
+    if (!Number.isNaN(parsedYear) && !Number.isNaN(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12) {
+      year = parsedYear;
+      monthIndex = parsedMonth - 1;
+    }
+  }
 
   const viewer = await getCurrentUser();
+  if (!viewer) {
+    redirect("/login?next=/calendar");
+  }
 
   const [events, sessions, semesters, categories] = await Promise.all([
     listAgenda({
@@ -73,9 +92,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
   // never more than one click away.
   const archiveSession = sessions.find((session) => !session.isActive);
 
-  // Group into month buckets. `events` is already chronological (oldest first
-  // for upcoming/all, newest first for past), so a Map preserves the order
-  // without a second sort.
+  // Group into month buckets for agenda view.
   const byMonth = new Map<string, { label: string; events: EventCard[] }>();
   for (const event of events) {
     const key = monthKey(event.startAt);
@@ -102,6 +119,21 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         ? "past"
         : "";
 
+  // Helper to build view switch URLs preserving filters
+  const currentParamsMap: Record<string, string> = {};
+  if (sessionId) currentParamsMap.session = sessionId;
+  if (semesterId) currentParamsMap.semester = semesterId;
+  if (categorySlug) currentParamsMap.category = categorySlug;
+  if (query) currentParamsMap.q = query;
+  if (rangeRaw) currentParamsMap.range = rangeRaw;
+  if (monthParam) currentParamsMap.month = monthParam;
+
+  function buildViewHref(targetView: "month" | "agenda") {
+    const p = new URLSearchParams(currentParamsMap);
+    p.set("view", targetView);
+    return `/calendar?${p.toString()}`;
+  }
+
   // "Print / save as PDF" keeps whichever session or semester the reader is
   // looking at, so what they print is what they were reading.
   const printParams = new URLSearchParams();
@@ -115,27 +147,57 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
     <div>
       <PageHeading
         title="Academic calendar"
-        description="Published dates across every LASU academic session — upcoming events first. Draft events are never shown here."
+        description="Published dates across every LASU academic session: upcoming events first. Draft events are never shown here."
       />
 
-      {/* ---- Subscribe / print ----------------------------------------- */}
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <p className="text-sm text-slate-600">
-          Subscribe once and every published date, correction and cancellation
-          arrives in your own calendar automatically. Or take a printable copy of
-          the session.
-        </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Link href="/subscribe" className={buttonSecondary}>
-            Subscribe to this calendar
+      {/* ---- View Switcher & Actions --------------------------------- */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--card)] p-4 shadow-xs">
+        <div className="flex items-center rounded-lg border border-[var(--line)] bg-[var(--paper-2)] p-1">
+          <Link
+            href={buildViewHref("month")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              view === "month"
+                ? "bg-[var(--green)] text-[#FFFFFF] font-bold shadow-xs"
+                : "text-[var(--ink)] hover:text-[var(--ink)]"
+            }`}
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="size-3.5">
+              <path
+                fillRule="evenodd"
+                d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Month Grid
           </Link>
-          {/* A plain anchor: this is a file, not a page, so client-side
-              navigation would be wrong. */}
+          <Link
+            href={buildViewHref("agenda")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              view === "agenda"
+                ? "bg-[var(--green)] text-[#FFFFFF] font-bold shadow-xs"
+                : "text-[var(--ink)] hover:text-[var(--ink)]"
+            }`}
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="size-3.5">
+              <path
+                fillRule="evenodd"
+                d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Agenda List
+          </Link>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/subscribe" className={buttonSecondary}>
+            Subscribe to feed
+          </Link>
           <a href="/ics/public.ics" className={buttonSecondary}>
-            Public feed (.ics)
+            Public .ics
           </a>
           <Link href={printHref} className={buttonSecondary}>
-            Print / save as PDF
+            Print / PDF
           </Link>
         </div>
       </div>
@@ -160,7 +222,10 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
       ) : null}
 
       {/* ---- Filters -------------------------------------------------- */}
-      <form method="get" action="/calendar" className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+      <form method="get" action="/calendar" className="mb-6 rounded-xl border border-[var(--line)] bg-[var(--card)] p-4 shadow-xs">
+        <input type="hidden" name="view" value={view} />
+        {monthParam ? <input type="hidden" name="month" value={monthParam} /> : null}
+
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <label htmlFor="filter-q" className={labelClasses}>
@@ -225,7 +290,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
               <option value="">All semesters</option>
               {semesters.map((semester) => (
                 <option key={semester.id} value={semester.id}>
-                  {semester.session.name} —{" "}
+                  {semester.session.name} -{" "}
                   {SEMESTER_LABELS[semester.type as SemesterType] ?? semester.type}
                 </option>
               ))}
@@ -257,7 +322,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
             Apply filters
           </button>
           {hasFilters ? (
-            <Link href="/calendar" className={buttonSecondary}>
+            <Link href={buildViewHref(view)} className={buttonSecondary}>
               Clear
             </Link>
           ) : null}
@@ -274,7 +339,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
           Showing events that have not finished yet. Looking for the{" "}
           {archiveSession.name} session?{" "}
           <Link
-            href={`/calendar?session=${archiveSession.id}&range=all`}
+            href={`/calendar?session=${archiveSession.id}&range=all&view=${view}`}
             className="font-medium text-blue-700 hover:underline"
           >
             Browse the {archiveSession.name} archive
@@ -283,12 +348,20 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         </p>
       ) : null}
 
-      {/* ---- Agenda --------------------------------------------------- */}
-      {events.length === 0 ? (
+      {/* ---- Calendar Views ------------------------------------------- */}
+      {view === "month" ? (
+        <MonthGrid
+          events={events}
+          year={year}
+          monthIndex={monthIndex}
+          selectedDay={selectedDay}
+          filterParams={currentParamsMap}
+        />
+      ) : events.length === 0 ? (
         <EmptyState
           title="No events match those filters"
           body="Try a different session, period or category, or clear the filters to see what is coming up."
-          action={{ href: "/calendar", label: "Show upcoming events" }}
+          action={{ href: "/calendar?view=agenda", label: "Show upcoming events" }}
         />
       ) : (
         <div className="space-y-8">
@@ -300,7 +373,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
               >
                 {bucket.label}
               </h2>
-              <ul className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <ul className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)] shadow-xs">
                 {bucket.events.map((event) => (
                   <EventAgendaItem key={event.id} event={event} />
                 ))}

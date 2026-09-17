@@ -19,7 +19,7 @@ export const metadata = {
 };
 
 // The page reads the session cookie and the live notice list, so it is
-// per-request — a cached copy would show a stale unread count.
+// per-request: a cached copy would show a stale unread count.
 export const dynamic = "force-dynamic";
 
 /**
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
  *
  * Any signed-in user, at any role. `proxy.ts` does not cover this path (its
  * matcher is deliberately limited to /admin and /staff), so the authorisation
- * check is `requireUser()` here — the page is the gate, exactly as the note in
+ * check is `requireUser()` here: the page is the gate, exactly as the note in
  * proxy.ts describes.
  *
  * The notices themselves come from `listNotifications`, which is scoped to the
@@ -169,10 +169,10 @@ export default async function NotificationsPage(props: PageProps<"/notifications
                     <input type="hidden" name="notificationId" value={notification.id} />
                     <button
                       type="submit"
-                      className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-300 transition hover:bg-white"
+                      className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-300 transition-all duration-150 hover:bg-white active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 shadow-2xs"
                     >
                       Mark as read
-                      <span className="sr-only"> — {notification.title}</span>
+                      <span className="sr-only">: {notification.title}</span>
                     </button>
                   </form>
                 ) : (

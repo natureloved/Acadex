@@ -50,6 +50,7 @@ export type EventInput = {
   description: string;
   categoryId: string;
   semesterId: string;
+  venueId?: string;
   startDate: string;
   endDate: string;
   startTime: string;
@@ -66,6 +67,7 @@ type NormalisedEvent = {
   description: string | null;
   categoryId: string;
   semesterId: string;
+  venueId: string | null;
   startAt: Date;
   endAt: Date;
   allDay: boolean;
@@ -148,6 +150,15 @@ async function normalise(
     errors.push("The end date cannot be before the start date.");
   }
 
+  let venueId: string | null = null;
+  if (input.venueId) {
+    const venue = await prisma.venue.findUnique({
+      where: { id: input.venueId },
+      select: { id: true },
+    });
+    if (venue) venueId = venue.id;
+  }
+
   const scope = input.scope as EventScope;
   const targetResult = await validateTargets(scope, input.targetIds);
   if (!targetResult.ok) errors.push(...targetResult.errors);
@@ -161,6 +172,7 @@ async function normalise(
     startAt,
     endAt,
     categoryId: category.id,
+    venueId,
     scope,
     targets: targetResult.targets,
     excludeEventId,
@@ -173,10 +185,11 @@ async function normalise(
       description: description || null,
       categoryId: category.id,
       semesterId: semester.id,
+      venueId,
       startAt,
       endAt,
       allDay: input.allDay === true,
-      location: input.location.trim() || null,
+      location: input.location?.trim() || null,
       visibility: input.visibility as EventVisibility,
       scope,
       targets: targetResult.targets,
@@ -211,6 +224,7 @@ async function findWarnings(input: {
   startAt: Date;
   endAt: Date;
   categoryId: string;
+  venueId?: string | null;
   scope: EventScope;
   targets: TargetRef[];
   excludeEventId?: string;
@@ -227,6 +241,34 @@ async function findWarnings(input: {
         input.semesterWindow.endDate,
       )}).`,
     );
+  }
+
+  // Interval-overlap query on assigned venue (Figure 5.3 in Project Report)
+  if (input.venueId) {
+    const venueCollisions = await prisma.calendarEvent.findMany({
+      where: {
+        venueId: input.venueId,
+        status: { notIn: ["CANCELLED", "REJECTED"] },
+        ...(input.excludeEventId ? { id: { not: input.excludeEventId } } : {}),
+        startAt: { lt: input.endAt },
+        endAt: { gt: input.startAt },
+      },
+      select: {
+        title: true,
+        startAt: true,
+        endAt: true,
+        venue: { select: { name: true } },
+      },
+    });
+
+    for (const conflict of venueCollisions) {
+      warnings.push(
+        `Venue clash at ${conflict.venue?.name ?? "selected venue"}: overlaps with "${conflict.title}" (${formatDateRange(
+          conflict.startAt,
+          conflict.endAt,
+        )}).`,
+      );
+    }
   }
 
   const [overlapping, category] = await Promise.all([
@@ -310,6 +352,7 @@ export async function createEvent(
         description: value.description,
         categoryId: value.categoryId,
         semesterId: value.semesterId,
+        venueId: value.venueId,
         startAt: value.startAt,
         endAt: value.endAt,
         allDay: value.allDay,
@@ -434,6 +477,7 @@ export async function updateEvent(
         description: value.description,
         categoryId: value.categoryId,
         semesterId: value.semesterId,
+        venueId: value.venueId,
         startAt: value.startAt,
         endAt: value.endAt,
         allDay: value.allDay,
@@ -758,6 +802,8 @@ export type AdminEventDetail = {
   version: number;
   allDay: boolean;
   location: string | null;
+  venueId: string | null;
+  venue: { id: string; name: string; code: string } | null;
   startAt: Date;
   endAt: Date;
   publishedAt: Date | null;
@@ -793,6 +839,8 @@ export async function getEventForAdmin(
       version: true,
       allDay: true,
       location: true,
+      venueId: true,
+      venue: { select: { id: true, name: true, code: true } },
       startAt: true,
       endAt: true,
       publishedAt: true,
@@ -834,6 +882,7 @@ export async function getEventForAdmin(
       categoryId: event.categoryId,
       scope: event.scope as EventScope,
       targets,
+      venueId: event.venueId,
       excludeEventId: event.id,
     }),
   ]);
@@ -848,6 +897,8 @@ export async function getEventForAdmin(
     version: event.version,
     allDay: event.allDay,
     location: event.location,
+    venueId: event.venueId,
+    venue: event.venue,
     startAt: event.startAt,
     endAt: event.endAt,
     publishedAt: event.publishedAt,
@@ -913,7 +964,7 @@ export async function listAuditActions(): Promise<string[]> {
 
 /** Form options shared by the create and edit screens. */
 export async function getEventFormOptions() {
-  const [categories, semesters, faculties, departments] = await Promise.all([
+  const [categories, semesters, faculties, departments, venues] = await Promise.all([
     prisma.eventCategory.findMany({
       select: { id: true, name: true, color: true },
       orderBy: { name: "asc" },
@@ -936,10 +987,322 @@ export async function getEventFormOptions() {
       select: { id: true, name: true, code: true, facultyId: true },
       orderBy: { name: "asc" },
     }),
+    prisma.venue.findMany({
+      select: { id: true, name: true, code: true, capacity: true, location: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
-  return { categories, semesters, faculties, departments };
+  return { categories, semesters, faculties, departments, venues };
 }
 
 export type EventFormOptions = Awaited<ReturnType<typeof getEventFormOptions>>;
+
+/**
+ * Staff departmental event submission (FR13 / Section 3.6.1).
+ * Arrives as PENDING approval; does not appear on public calendar until approved.
+ */
+export async function submitDepartmentalEvent(
+  actor: Actor,
+  input: EventInput,
+): Promise<ServiceResult<{ eventId: string }>> {
+  const result = await normalise(input);
+  if (!result.ok) return fail(...result.errors);
+
+  const value = result.value;
+  const status = "PENDING";
+  const snapshot = makeSnapshot({ ...value, status }, value.targetLabels);
+
+  const eventId = await prisma.$transaction(async (tx) => {
+    const created = await tx.calendarEvent.create({
+      data: {
+        title: value.title,
+        description: value.description,
+        categoryId: value.categoryId,
+        semesterId: value.semesterId,
+        venueId: value.venueId,
+        startAt: value.startAt,
+        endAt: value.endAt,
+        allDay: value.allDay,
+        location: value.location,
+        status: "PENDING",
+        visibility: value.visibility,
+        scope: value.scope,
+        createdById: actor.id,
+        publishedAt: null,
+        version: 1,
+      },
+      select: { id: true },
+    });
+
+    for (const target of value.targets) {
+      await tx.eventTarget.create({
+        data: {
+          eventId: created.id,
+          targetType: target.targetType,
+          targetId: target.targetId,
+        },
+      });
+    }
+
+    await writeRevision(tx, {
+      eventId: created.id,
+      changedById: actor.id,
+      changeType: "CREATED",
+      note: "Submitted by staff for administrative approval.",
+      before: null,
+      after: snapshot,
+    });
+
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "EVENT_SUBMITTED_FOR_APPROVAL",
+      entity: "CalendarEvent",
+      entityId: created.id,
+      meta: { title: value.title, scope: value.scope },
+    });
+
+    const admins = await tx.user.findMany({
+      where: { role: "ADMIN", isActive: true },
+      select: { id: true },
+    });
+
+    for (const admin of admins) {
+      await tx.notification.create({
+        data: {
+          userId: admin.id,
+          eventId: created.id,
+          type: "EVENT_PENDING_APPROVAL",
+          title: `Pending Approval: ${value.title}`,
+          body: `A new event (${value.title}) was submitted for review.`,
+        },
+      });
+    }
+
+    return created.id;
+  });
+
+  return succeed({ eventId }, value.warnings);
+}
+
+/**
+ * Approve a pending departmental event (FR13 / Figure 5.2 / Table 5.2).
+ */
+export async function approveEvent(
+  actor: Actor,
+  eventId: string,
+  note?: string,
+): Promise<ServiceResult<{ eventId: string }>> {
+  const existing = await prisma.calendarEvent.findUnique({
+    where: { id: eventId },
+    include: { targets: true, category: true },
+  });
+
+  if (!existing) return fail("Event not found.");
+  if (existing.status !== "PENDING") {
+    return fail("Only events pending approval can be approved.");
+  }
+
+  const beforeSnapshot = makeSnapshot(
+    existing,
+    await describeTargets(
+      existing.targets.map((target) => ({
+        targetType: target.targetType as TargetRef["targetType"],
+        targetId: target.targetId,
+      })),
+    ),
+  );
+
+  const afterSnapshot = {
+    ...beforeSnapshot,
+    status: "PUBLISHED",
+  };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.calendarEvent.update({
+      where: { id: eventId },
+      data: {
+        status: "PUBLISHED",
+        publishedAt: new Date(),
+      },
+    });
+
+    await writeRevision(tx, {
+      eventId,
+      changedById: actor.id,
+      changeType: "APPROVED",
+      note: note ?? "Approved by Administrator and published to the academic calendar.",
+      before: beforeSnapshot,
+      after: afterSnapshot,
+    });
+
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "EVENT_APPROVED",
+      entity: "CalendarEvent",
+      entityId: eventId,
+      meta: { title: existing.title, note },
+    });
+
+    await tx.notification.create({
+      data: {
+        userId: existing.createdById,
+        eventId,
+        type: "EVENT_APPROVED",
+        title: `Event Approved: ${existing.title}`,
+        body: `Your submitted event "${existing.title}" has been approved and is now live on the calendar.`,
+      },
+    });
+  });
+
+  await notifyAudience(
+    prisma,
+    {
+      eventId,
+      type: "EVENT_APPROVED",
+      title: `New Event: ${existing.title}`,
+      body: `${existing.title} has been approved and published on the academic calendar.`,
+      scope: existing.scope as EventScope,
+      visibility: existing.visibility as EventVisibility,
+      targets: existing.targets.map((t) => ({
+        targetType: t.targetType as TargetRef["targetType"],
+        targetId: t.targetId,
+      })),
+    },
+  );
+
+  return succeed({ eventId });
+}
+
+/**
+ * Reject a pending departmental event with a reason (FR13 / Table 5.2).
+ */
+export async function rejectEvent(
+  actor: Actor,
+  eventId: string,
+  reason: string,
+): Promise<ServiceResult<{ eventId: string }>> {
+  const existing = await prisma.calendarEvent.findUnique({
+    where: { id: eventId },
+    include: { targets: true },
+  });
+
+  if (!existing) return fail("Event not found.");
+  if (existing.status !== "PENDING") {
+    return fail("Only events pending approval can be rejected.");
+  }
+
+  const beforeSnapshot = makeSnapshot(
+    existing,
+    await describeTargets(
+      existing.targets.map((target) => ({
+        targetType: target.targetType as TargetRef["targetType"],
+        targetId: target.targetId,
+      })),
+    ),
+  );
+
+  const afterSnapshot = {
+    ...beforeSnapshot,
+    status: "REJECTED",
+  };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.calendarEvent.update({
+      where: { id: eventId },
+      data: {
+        status: "REJECTED",
+      },
+    });
+
+    await writeRevision(tx, {
+      eventId,
+      changedById: actor.id,
+      changeType: "REJECTED",
+      note: `Rejected: ${reason}`,
+      before: beforeSnapshot,
+      after: afterSnapshot,
+    });
+
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "EVENT_REJECTED",
+      entity: "CalendarEvent",
+      entityId: eventId,
+      meta: { title: existing.title, reason },
+    });
+
+    await tx.notification.create({
+      data: {
+        userId: existing.createdById,
+        eventId,
+        type: "EVENT_REJECTED",
+        title: `Event Rejected: ${existing.title}`,
+        body: `Your submitted event "${existing.title}" was rejected. Reason: ${reason}`,
+      },
+    });
+  });
+
+  return succeed({ eventId });
+}
+
+/**
+ * Check a proposed venue and time window for conflicts (Figure 5.3).
+ */
+export async function checkIntervalConflict(params: {
+  venueId?: string | null;
+  startDatetime: string | Date;
+  endDatetime: string | Date;
+  excludeEventId?: string;
+}): Promise<{
+  hasConflict: boolean;
+  conflicts: {
+    id: string;
+    title: string;
+    startAt: Date;
+    endAt: Date;
+    venueName: string;
+  }[];
+}> {
+  if (!params.venueId) {
+    return { hasConflict: false, conflicts: [] };
+  }
+
+  const startAt =
+    typeof params.startDatetime === "string"
+      ? new Date(params.startDatetime)
+      : params.startDatetime;
+  const endAt =
+    typeof params.endDatetime === "string"
+      ? new Date(params.endDatetime)
+      : params.endDatetime;
+
+  const overlapping = await prisma.calendarEvent.findMany({
+    where: {
+      venueId: params.venueId,
+      status: { notIn: ["CANCELLED", "REJECTED"] },
+      ...(params.excludeEventId ? { id: { not: params.excludeEventId } } : {}),
+      startAt: { lt: endAt },
+      endAt: { gt: startAt },
+    },
+    select: {
+      id: true,
+      title: true,
+      startAt: true,
+      endAt: true,
+      venue: { select: { name: true } },
+    },
+  });
+
+  return {
+    hasConflict: overlapping.length > 0,
+    conflicts: overlapping.map((e) => ({
+      id: e.id,
+      title: e.title,
+      startAt: e.startAt,
+      endAt: e.endAt,
+      venueName: e.venue?.name ?? "Venue",
+    })),
+  };
+}
 

@@ -10,7 +10,13 @@
 export const ROLES = ["ADMIN", "STAFF", "STUDENT"] as const;
 export type Role = (typeof ROLES)[number];
 
-export const EVENT_STATUSES = ["DRAFT", "PUBLISHED", "CANCELLED"] as const;
+export const EVENT_STATUSES = [
+  "DRAFT",
+  "PENDING",
+  "PUBLISHED",
+  "REJECTED",
+  "CANCELLED",
+] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
 export const EVENT_VISIBILITIES = ["PUBLIC", "STAFF_ONLY"] as const;
@@ -30,6 +36,8 @@ export const REVISION_TYPES = [
   "UPDATED",
   "PUBLISHED",
   "RESCHEDULED",
+  "APPROVED",
+  "REJECTED",
   "CANCELLED",
 ] as const;
 export type RevisionType = (typeof REVISION_TYPES)[number];
@@ -47,6 +55,9 @@ export type RevisionType = (typeof REVISION_TYPES)[number];
 export const NOTIFICATION_TYPES = [
   "EVENT_RESCHEDULED",
   "EVENT_CANCELLED",
+  "EVENT_PENDING_APPROVAL",
+  "EVENT_APPROVED",
+  "EVENT_REJECTED",
   "REMINDER_T7",
   "REMINDER_T1",
   "REMINDER",
@@ -75,7 +86,9 @@ export const SEMESTER_LABELS: Record<SemesterType, string> = {
 
 export const STATUS_LABELS: Record<EventStatus, string> = {
   DRAFT: "Draft",
+  PENDING: "Pending Approval",
   PUBLISHED: "Published",
+  REJECTED: "Rejected",
   CANCELLED: "Cancelled",
 };
 
@@ -91,12 +104,17 @@ export const REVISION_LABELS: Record<RevisionType, string> = {
   UPDATED: "Updated",
   PUBLISHED: "Published",
   RESCHEDULED: "Rescheduled",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
   CANCELLED: "Cancelled",
 };
 
 export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   EVENT_RESCHEDULED: "Rescheduled",
   EVENT_CANCELLED: "Cancelled",
+  EVENT_PENDING_APPROVAL: "Pending Approval",
+  EVENT_APPROVED: "Approved",
+  EVENT_REJECTED: "Rejected",
   REMINDER_T7: "One week to go",
   REMINDER_T1: "Tomorrow",
   REMINDER: "Reminder",

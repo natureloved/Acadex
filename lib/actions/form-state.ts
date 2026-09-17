@@ -28,6 +28,7 @@ export const EVENT_FIELD_NAMES = [
   "description",
   "categoryId",
   "semesterId",
+  "venueId",
   "startDate",
   "endDate",
   "startTime",

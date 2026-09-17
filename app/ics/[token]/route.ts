@@ -8,13 +8,13 @@ import { resolveFeedToken } from "@/lib/services/subscriptions";
 /**
  * Calendar subscription feeds.
  *
- *   GET /ics/<token>       — one person's feed (the token is the credential)
- *   GET /ics/<token>.ics   — the same thing; the suffix is decoration that makes
- *                            the URL self-describing when pasted into a client
- *   GET /ics/public.ics    — the whole-university calendar, no account needed
+ *   GET /ics/<token>       : one person's feed (the token is the credential)
+ *   GET /ics/<token>.ics   : the same thing; the suffix is decoration that makes
+ *                            some calendar clients happier about MIME types
+ *   GET /ics/public.ics    : the whole-university calendar, no account needed
  *
  * This route is intentionally **public**: no session, and nothing added to the
- * `proxy.ts` matcher — Google Calendar, Outlook and Apple Calendar cannot present
+ * `proxy.ts` matcher : Google Calendar, Outlook and Apple Calendar cannot present
  * a login form, so a session check here would make the feature impossible. The
  * token is the authorisation, and everything it can reach is still filtered by
  * the audience rule in `lib/events.ts`, so a leak of one token exposes exactly
@@ -58,7 +58,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/ics/[token]
 
   return icsResponse(
     buildCalendar(events, {
-      calendarName: `${resolved.subscriber.name} — LASU Academic Calendar`,
+      calendarName: `${resolved.subscriber.name} - LASU Academic Calendar`,
       calendarDescription:
         "Published dates for your faculty, department and level, plus whole-university notices. Corrections and cancellations are applied automatically.",
       now,

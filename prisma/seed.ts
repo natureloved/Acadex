@@ -153,7 +153,7 @@ const FACULTIES: {
 
 const CATEGORIES: { name: string; slug: string; color: string }[] = [
   { name: "Registration", slug: "registration", color: "#2563EB" },
-  { name: "Lectures", slug: "lectures", color: "#059669" },
+  { name: "Lectures", slug: "lectures", color: "#2E8B67" },
   { name: "Examinations", slug: "examinations", color: "#DC2626" },
   { name: "Holidays", slug: "holidays", color: "#D97706" },
   { name: "Break", slug: "break", color: "#0891B2" },
@@ -186,6 +186,7 @@ type SeedEvent = {
   scope?: "ALL" | "FACULTY" | "DEPARTMENT" | "LEVEL";
   targets?: { targetType: "FACULTY" | "DEPARTMENT" | "LEVEL"; targetCode?: string; targetLevel?: string }[];
   location?: string;
+  venueCode?: string;
   /** Set when the event's dates were moved after first publication. */
   version?: number;
   revisions?: {
@@ -659,6 +660,26 @@ const EVENTS: SeedEvent[] = [...EVENTS_2025_2026, ...EVENTS_2026_2027];
 // ---------------------------------------------------------------------------
 
 async function main() {
+  // This script DELETES every row before recreating the demo data, and the
+  // accounts it creates have a password published in the README. It must never
+  // run against a real deployment by accident, so it refuses in production
+  // unless it is explicitly told that is what is wanted.
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.ALLOW_DESTRUCTIVE_SEED !== "1"
+  ) {
+    console.error(
+      [
+        "Refusing to seed: NODE_ENV is production.",
+        "",
+        "This script deletes every row and recreates demo accounts whose",
+        "password is published in this repository. If that is genuinely what",
+        "you want, re-run with ALLOW_DESTRUCTIVE_SEED=1.",
+      ].join("\n"),
+    );
+    process.exit(1);
+  }
+
   console.log("Seeding Acadex demo data (LASU 2025/2026 archive + 2026/2027 current)...\n");
 
   // --- Reset, in foreign-key-safe order ------------------------------------
@@ -668,12 +689,30 @@ async function main() {
   await prisma.eventRevision.deleteMany();
   await prisma.eventTarget.deleteMany();
   await prisma.calendarEvent.deleteMany();
+  await prisma.venue.deleteMany();
   await prisma.eventCategory.deleteMany();
   await prisma.semester.deleteMany();
   await prisma.academicSession.deleteMany();
   await prisma.user.deleteMany();
   await prisma.department.deleteMany();
   await prisma.faculty.deleteMany();
+
+  // --- Venues / Resources --------------------------------------------------
+  const VENUES = [
+    { name: "Buba Marwa Auditorium", code: "BMA", capacity: 3000, location: "Main Campus Ojo" },
+    { name: "MBA Hall", code: "MBA", capacity: 800, location: "Faculty of Management Sciences" },
+    { name: "Faculty of Science Lecture Theatre", code: "SLT", capacity: 500, location: "Faculty of Science Complex" },
+    { name: "3-in-1 Lecture Hall", code: "3IN1", capacity: 1200, location: "New Faculty of Education" },
+    { name: "University Library Auditorium", code: "ULA", capacity: 250, location: "Fatai Owodunni Library" },
+    { name: "Senate Chamber", code: "SC", capacity: 150, location: "Babaginda Senate Building" },
+  ];
+
+  const venueIdByCode = new Map<string, string>();
+  for (const venue of VENUES) {
+    const createdVenue = await prisma.venue.create({ data: venue });
+    venueIdByCode.set(venue.code, createdVenue.id);
+  }
+  console.log(`  venues: ${VENUES.length} (auditoriums, lecture theatres, halls)`);
 
   // --- Faculties and departments -------------------------------------------
   const departmentIdByCode = new Map<string, string>();
@@ -836,6 +875,7 @@ async function main() {
         endAt: d(event.end),
         allDay: true,
         location: event.location ?? null,
+        venueId: event.venueCode ? venueIdByCode.get(event.venueCode) ?? null : null,
         status: event.status,
         visibility: event.visibility ?? "PUBLIC",
         scope: event.scope ?? "ALL",

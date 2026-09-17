@@ -1,0 +1,47 @@
+graph TD
+  Staff["Departmental Staff"]
+  Admin["Academic Registrar"]
+  Student["Student / Viewer"]
+  ExternalCalendar["External Calendar Client"]
+
+  P1(("1.0<br/>Event & Proposal<br/>Submission"))
+  P2(("2.0<br/>Figure 5.3 Interval<br/>Conflict Detection"))
+  P3(("3.0<br/>Administrative Review<br/>& Approval"))
+  P4(("4.0<br/>Calendar Publishing<br/>& Revision Tracking"))
+  P5(("5.0<br/>RFC 5545 iCal Feed<br/>Generation"))
+  P6(("6.0<br/>Targeted Notification<br/>Dispatch"))
+
+  D1[("D1: Venues")]
+  D2[("D2: Calendar Events")]
+  D3[("D3: Event Revisions")]
+  D4[("D4: Notifications")]
+  D5[("D5: Audit Log")]
+
+  Staff -->|"Submit Event Proposal"| P1
+  Admin -->|"Create / Edit Event"| P1
+  P1 -->|"Check Schedule & Venue Clashes"| P2
+
+  D1 <-->|"Read Venue Availability"| P2
+  D2 <-->|"Read Existing Event Intervals"| P2
+
+  P2 -->|"Conflict Warnings & Validation Status"| P1
+  P1 -->|"Store Proposed Event (PENDING/DRAFT)"| D2
+  P1 -->|"Log Action"| D5
+
+  Admin -->|"Review Pending Submissions"| P3
+  D2 -->|"Fetch Pending Records"| P3
+  P3 -->|"Approve / Reject Decision"| P4
+
+  P4 -->|"Update Status to PUBLISHED"| D2
+  P4 -->|"Append Immutable Revision Snapshot"| D3
+  P4 -->|"Trigger Audience Alerts"| P6
+  P4 -->|"Log Approval/Rejection"| D5
+
+  D3 -->|"Read SEQUENCE & Revision Count"| P5
+  D2 -->|"Read Published Events"| P5
+  P5 -->|"Stream .ics MIME Payload"| ExternalCalendar
+
+  D2 -->|"Read Filtered Events"| Student
+  P6 -->|"Dispatch T-7, T-1 & Reschedule Notices"| D4
+  D4 -->|"Deliver Alerts"| Student
+  D4 -->|"Deliver Proposal Feedback"| Staff

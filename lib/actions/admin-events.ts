@@ -13,10 +13,12 @@ import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth";
 import {
+  approveEvent,
   cancelEvent,
   createEvent,
   deleteDraftEvent,
   publishEvent,
+  rejectEvent,
   updateEvent,
   type EventInput,
 } from "@/lib/services/events";
@@ -38,6 +40,7 @@ function readInput(formData: FormData): EventInput {
     description: text("description"),
     categoryId: text("categoryId"),
     semesterId: text("semesterId"),
+    venueId: text("venueId") || undefined,
     startDate: text("startDate"),
     endDate: text("endDate"),
     startTime: text("startTime"),
@@ -153,4 +156,32 @@ export async function deleteEventAction(formData: FormData): Promise<void> {
   }
 
   redirect("/admin/events?deleted=1");
+}
+
+export async function approveEventAction(formData: FormData): Promise<void> {
+  const actor = await currentActor();
+  const eventId = String(formData.get("eventId") ?? "");
+  const note = String(formData.get("note") ?? "");
+
+  const result = await approveEvent(actor, eventId, note || undefined);
+
+  redirect(
+    result.ok
+      ? `/admin/events/${eventId}?saved=approved`
+      : `/admin/events/${eventId}?error=${encodeURIComponent(result.errors.join(" "))}`,
+  );
+}
+
+export async function rejectEventAction(formData: FormData): Promise<void> {
+  const actor = await currentActor();
+  const eventId = String(formData.get("eventId") ?? "");
+  const reason = String(formData.get("reason") ?? "Does not meet academic calendar guidelines.");
+
+  const result = await rejectEvent(actor, eventId, reason);
+
+  redirect(
+    result.ok
+      ? `/admin/events/${eventId}?saved=rejected`
+      : `/admin/events/${eventId}?error=${encodeURIComponent(result.errors.join(" "))}`,
+  );
 }

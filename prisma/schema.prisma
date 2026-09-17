@@ -128,17 +128,32 @@ model EventCategory {
   @@index([name])
 }
 
+model Venue {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique
+  capacity  Int?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events CalendarEvent[]
+
+  @@index([name])
+}
+
 model CalendarEvent {
   id          String    @id @default(cuid())
   title       String
   description String?
   categoryId  String
   semesterId  String
+  venueId     String?
   startAt     DateTime
   endAt       DateTime
   allDay      Boolean   @default(true)
   location    String?
-  /// DRAFT | PUBLISHED | CANCELLED
+  /// DRAFT | PENDING | PUBLISHED | REJECTED | CANCELLED
   status      String    @default("DRAFT")
   /// PUBLIC | STAFF_ONLY
   visibility  String    @default("PUBLIC")
@@ -153,6 +168,7 @@ model CalendarEvent {
 
   category      EventCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   semester      Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  venue         Venue?         @relation(fields: [venueId], references: [id], onDelete: SetNull)
   createdBy     User           @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   targets       EventTarget[]
   revisions     EventRevision[]
@@ -165,6 +181,7 @@ model CalendarEvent {
   @@index([visibility, status])
   @@index([semesterId])
   @@index([categoryId])
+  @@index([venueId])
   @@index([scope])
 }
 

@@ -90,7 +90,7 @@ export default async function SubscribePage(props: PageProps<"/subscribe">) {
     <div className="max-w-3xl">
       <PageHeading
         title="Subscribe to the calendar"
-        description="Add the LASU academic calendar to Google Calendar, Outlook or Apple Calendar once. Every published date, every correction and every cancellation then arrives automatically — you never have to come back here to check."
+        description="Add the LASU academic calendar to Google Calendar, Outlook or Apple Calendar once. Every published date, every correction and every cancellation then arrives automatically: you never have to come back here to check."
       />
 
       {saved ? (
@@ -143,7 +143,7 @@ export default async function SubscribePage(props: PageProps<"/subscribe">) {
         </div>
         <p className="mt-3 text-xs text-slate-500">
           Calendar clients decide for themselves how often to check a subscribed
-          calendar — usually between one hour and one day. Acadex advertises a
+          calendar (usually between one hour and one day). Acadex advertises a
           one-hour refresh interval, and shows the time each entry was last changed
           so a correction is easy to spot.
         </p>
@@ -221,7 +221,7 @@ async function PersonalFeed({
           Treat this address as a secret
         </h2>
         <p className="mt-1 text-sm text-amber-900">
-          Anyone who has this address can read your feed — there is no password on
+          Anyone who has this address can read your feed: there is no password on
           it, because calendar applications cannot sign in. Only share it with
           yourself, and do not post it in a group chat or a public repository.
         </p>
@@ -250,7 +250,7 @@ async function PersonalFeed({
         </h2>
         <p className="mt-2 text-sm text-slate-600">
           The public feed needs no account and contains every published
-          whole-university date — but not the notices targeted at your faculty,
+          whole-university date, but not the notices targeted at your faculty,
           department or level, which is what your personal feed adds.
         </p>
         <div className="mt-3">

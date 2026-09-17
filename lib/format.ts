@@ -79,3 +79,50 @@ export function formatRelativeDays(target: Date, now: Date = new Date()): string
   if (delta > 1) return `in ${delta} days`;
   return `${Math.abs(delta)} days ago`;
 }
+
+/** `YYYY-MM-DD` string in UTC. */
+export function isoDate(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    date.getUTCDate(),
+  ).padStart(2, "0")}`;
+}
+
+export type CalendarDayCell = {
+  date: Date;
+  dateString: string;
+  dayNumber: number;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+};
+
+/**
+ * Generate a standard 35 or 42-day Monday-to-Sunday calendar grid for a given year and month.
+ */
+export function getCalendarGridDays(
+  year: number,
+  monthIndex: number, // 0 = Jan, 11 = Dec
+  today: Date = new Date(),
+): CalendarDayCell[] {
+  const firstOfMonth = new Date(Date.UTC(year, monthIndex, 1));
+  // Monday is 0, Sunday is 6
+  const startDayOffset = (firstOfMonth.getUTCDay() + 6) % 7;
+  const startGridDate = new Date(firstOfMonth.getTime() - startDayOffset * 86400000);
+
+  const todayIso = isoDate(today);
+  const cells: CalendarDayCell[] = [];
+
+  // 6 weeks * 7 days = 42 cells guarantees full month representation
+  for (let i = 0; i < 42; i++) {
+    const cellDate = new Date(startGridDate.getTime() + i * 86400000);
+    const dateString = isoDate(cellDate);
+    cells.push({
+      date: cellDate,
+      dateString,
+      dayNumber: cellDate.getUTCDate(),
+      isCurrentMonth: cellDate.getUTCMonth() === monthIndex,
+      isToday: dateString === todayIso,
+    });
+  }
+
+  return cells;
+}

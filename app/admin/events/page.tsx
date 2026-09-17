@@ -14,6 +14,7 @@ import {
   EVENT_STATUSES,
   SCOPE_LABELS,
   SEMESTER_LABELS,
+  STATUS_LABELS,
   type EventScope,
   type EventStatus,
   type SemesterType,
@@ -148,11 +149,7 @@ export default async function AdminEventsPage(props: PageProps<"/admin/events">)
               <option value="">Any status</option>
               {EVENT_STATUSES.map((value) => (
                 <option key={value} value={value}>
-                  {(value as EventStatus) === "DRAFT"
-                    ? "Draft"
-                    : (value as EventStatus) === "PUBLISHED"
-                      ? "Published"
-                      : "Cancelled"}
+                  {STATUS_LABELS[value as EventStatus] ?? value}
                 </option>
               ))}
             </select>

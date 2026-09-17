@@ -21,6 +21,8 @@ const eventCardSelect = {
   endAt: true,
   allDay: true,
   location: true,
+  venueId: true,
+  venue: { select: { id: true, name: true, code: true, location: true } },
   status: true,
   visibility: true,
   scope: true,
@@ -71,6 +73,8 @@ export type EventCard = {
   endAt: Date;
   allDay: boolean;
   location: string | null;
+  venueId?: string | null;
+  venue?: { id: string; name: string; code: string; location: string | null } | null;
   status: string;
   visibility: string;
   scope: string;
@@ -247,8 +251,27 @@ export async function getSessionOptions() {
 
 export async function getCategoryOptions() {
   return prisma.eventCategory.findMany({
-    select: { name: true, slug: true, color: true },
+    select: { id: true, name: true, slug: true, color: true },
     orderBy: { name: "asc" },
+  });
+}
+
+export async function getVenueOptions() {
+  return prisma.venue.findMany({
+    select: { id: true, name: true, code: true, capacity: true, location: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getDepartmentOptions() {
+  return prisma.department.findMany({
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      faculty: { select: { name: true, code: true } },
+    },
+    orderBy: [{ faculty: { name: "asc" } }, { name: "asc" }],
   });
 }
 
@@ -455,9 +478,11 @@ export type AdminStats = {
   total: number;
   published: number;
   draft: number;
+  pending: number;
   cancelled: number;
   upcoming30Days: number;
   nextEvent: { id: string; title: string; startAt: Date } | null;
+  pendingApprovals: EventCard[];
   sessionCount: number;
   userCount: number;
 };
@@ -469,31 +494,49 @@ export async function getAdminStats(now: Date = new Date()): Promise<AdminStats>
   const dayStart = utcDayStart(now);
   const in30Days = new Date(dayStart.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const [total, published, draft, cancelled, upcoming30Days, nextEvent, sessionCount, userCount] =
-    await Promise.all([
-      prisma.calendarEvent.count(),
-      prisma.calendarEvent.count({ where: { status: "PUBLISHED" } }),
-      prisma.calendarEvent.count({ where: { status: "DRAFT" } }),
-      prisma.calendarEvent.count({ where: { status: "CANCELLED" } }),
-      prisma.calendarEvent.count({
-        where: { status: "PUBLISHED", startAt: { gte: dayStart, lte: in30Days } },
-      }),
-      prisma.calendarEvent.findFirst({
-        where: { status: "PUBLISHED", startAt: { gte: dayStart } },
-        select: { id: true, title: true, startAt: true },
-        orderBy: { startAt: "asc" },
-      }),
-      prisma.academicSession.count(),
-      prisma.user.count(),
-    ]);
+  const [
+    total,
+    published,
+    draft,
+    pending,
+    cancelled,
+    upcoming30Days,
+    nextEvent,
+    pendingApprovals,
+    sessionCount,
+    userCount,
+  ] = await Promise.all([
+    prisma.calendarEvent.count(),
+    prisma.calendarEvent.count({ where: { status: "PUBLISHED" } }),
+    prisma.calendarEvent.count({ where: { status: "DRAFT" } }),
+    prisma.calendarEvent.count({ where: { status: "PENDING" } }),
+    prisma.calendarEvent.count({ where: { status: "CANCELLED" } }),
+    prisma.calendarEvent.count({
+      where: { status: "PUBLISHED", startAt: { gte: dayStart, lte: in30Days } },
+    }),
+    prisma.calendarEvent.findFirst({
+      where: { status: "PUBLISHED", startAt: { gte: dayStart } },
+      select: { id: true, title: true, startAt: true },
+      orderBy: { startAt: "asc" },
+    }),
+    prisma.calendarEvent.findMany({
+      where: { status: "PENDING" },
+      select: eventCardSelect,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.academicSession.count(),
+    prisma.user.count(),
+  ]);
 
   return {
     total,
     published,
     draft,
+    pending,
     cancelled,
     upcoming30Days,
     nextEvent,
+    pendingApprovals,
     sessionCount,
     userCount,
   };
@@ -519,6 +562,29 @@ export async function listStaffAgenda(
     select: eventCardSelect,
     orderBy: { startAt: "asc" },
     take: limit,
+  });
+}
+
+export type StaffSubmission = EventCard & {
+  revisions: { changeType: string; note: string | null; changedAt: Date }[];
+};
+
+export async function listStaffSubmissions(userId: string): Promise<StaffSubmission[]> {
+  return prisma.calendarEvent.findMany({
+    where: { createdById: userId },
+    select: {
+      ...eventCardSelect,
+      revisions: {
+        select: {
+          changeType: true,
+          note: true,
+          changedAt: true,
+        },
+        orderBy: { changedAt: "desc" },
+        take: 3,
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
 }
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { PrintButton } from "@/components/print-button";
 import { CategoryChip, EmptyState, inputClasses, labelClasses } from "@/components/ui";
@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
  * Rendered on the server with no client JavaScript except the print button, and
  * stripped of the site header, footer and buttons by the `@media print` rules in
  * globals.css. The result is a page a registry clerk can print, or "Save as PDF"
- * from the browser's own dialog — which is why no PDF library is needed.
+ * from the browser's own dialog : which is why no PDF library is needed.
  *
  * Audience filtering still applies: this is a public route, so an anonymous
  * visitor printing the calendar gets the whole-university dates and nothing else.
@@ -47,6 +47,9 @@ export default async function CalendarPrintPage(props: PageProps<"/calendar/prin
   if (!period) notFound();
 
   const viewer = await getCurrentUser();
+  if (!viewer) {
+    redirect("/login?next=/calendar/print");
+  }
 
   const [events, sessions, semesters] = await Promise.all([
     listAgenda({
@@ -111,7 +114,7 @@ export default async function CalendarPrintPage(props: PageProps<"/calendar/prin
           </div>
           <div>
             <label htmlFor="print-semester" className={labelClasses}>
-              Semester (optional — overrides the session)
+              Semester (optional: overrides the session)
             </label>
             <select
               id="print-semester"
@@ -122,7 +125,7 @@ export default async function CalendarPrintPage(props: PageProps<"/calendar/prin
               <option value="">Whole session</option>
               {semesters.map((semester) => (
                 <option key={semester.id} value={semester.id}>
-                  {semester.session.name} —{" "}
+                  {semester.session.name} /{" "}
                   {SEMESTER_LABELS[semester.type as SemesterType] ?? semester.type}
                 </option>
               ))}
@@ -131,7 +134,7 @@ export default async function CalendarPrintPage(props: PageProps<"/calendar/prin
         </div>
         <button
           type="submit"
-          className="mt-3 inline-flex items-center justify-center rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          className="mt-3 inline-flex items-center justify-center rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-all duration-150 hover:bg-blue-800 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 shadow-2xs"
         >
           Show this period
         </button>
@@ -143,7 +146,7 @@ export default async function CalendarPrintPage(props: PageProps<"/calendar/prin
           Lagos State University
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
-          Academic Calendar — {period.title}
+          Academic Calendar: {period.title}
         </h1>
         <p className="mt-1 text-sm text-slate-700">
           {period.kind === "semester" ? "Semester dates: " : "Session dates: "}
@@ -215,7 +218,7 @@ export default async function CalendarPrintPage(props: PageProps<"/calendar/prin
 
       <footer className="mt-8 border-t border-slate-300 pt-3 text-xs text-slate-500">
         <p>
-          Acadex — Academic Calendar Management System · {period.title} · printed{" "}
+          Acadex - Academic Calendar Management System · {period.title} · printed{" "}
           {generatedOn}
         </p>
         <p className="mt-1">

@@ -1,0 +1,54 @@
+graph TD
+  subgraph PresentationTier ["Presentation Tier (Client Layer)"]
+    direction TB
+    WebBrowser["Web Browser (Responsive Desktop & Mobile UI)"]
+    MonthGrid["Interactive Month Grid & Agenda Views"]
+    StaffPortal["Staff Departmental Portal (Proposal Form)"]
+    AdminPanel["Registry Admin Console (Approvals & Venues)"]
+    CalendarClients["Third-Party Calendar Apps (Apple Calendar, Google Calendar, Outlook)"]
+  end
+
+  subgraph ApplicationTier ["Application Tier (Next.js 16 Server / Business Logic)"]
+    direction TB
+    Proxy["Auth & Routing Proxy (proxy.ts)"]
+    ServerActions["Server Actions (admin-events, staff-events, venues, sessions)"]
+    RestAPIs["REST API Endpoints (/api/events, /api/venues, /api/events/check-conflict)"]
+    ICalEngine["RFC 5545 iCalendar Engine (SEQUENCE monotonic versioning)"]
+    ConflictEngine["Figure 5.3 Conflict Engine (startA < endB && startB < endA)"]
+    RevisionService["Audit & Revisions Snapshot Service"]
+    NotificationQueue["Audience-Targeted Reminder Dispatcher (T-7, T-1)"]
+  end
+
+  subgraph DataTier ["Data Tier (Persistence Layer)"]
+    direction TB
+    PrismaORM["Prisma ORM 7.x (Type-Safe Database Client)"]
+    SQLite["SQLite Engine (dev.db with WAL Mode)"]
+    Tables["Relational 3NF Entities:
+    - AcademicSession & Semester
+    - CalendarEvent & Venue
+    - EventCategory & EventTarget
+    - EventRevision & AuditLog
+    - User, Faculty & Department
+    - Notification & SubscriptionToken"]
+  end
+
+  WebBrowser --> Proxy
+  StaffPortal --> Proxy
+  AdminPanel --> Proxy
+  CalendarClients -->|HTTP GET /ics/token| ICalEngine
+
+  Proxy --> ServerActions
+  Proxy --> RestAPIs
+
+  ServerActions --> ConflictEngine
+  ServerActions --> RevisionService
+  ServerActions --> NotificationQueue
+  RestAPIs --> ConflictEngine
+
+  ConflictEngine --> PrismaORM
+  RevisionService --> PrismaORM
+  NotificationQueue --> PrismaORM
+  ICalEngine --> PrismaORM
+
+  PrismaORM --> SQLite
+  SQLite --> Tables

@@ -9,7 +9,7 @@ import { generateDueReminders } from "@/lib/services/notifications";
  *
  * `POST` is what a scheduler should use. `GET` exists for manual testing (a
  * `curl -X GET` with the header), and is deliberately no more privileged than the
- * POST — both run the job only for a caller that presents the secret.
+ * POST : both run the job only for a caller that presents the secret.
  *
  * Three properties matter here, and they are the whole of the security story:
  *

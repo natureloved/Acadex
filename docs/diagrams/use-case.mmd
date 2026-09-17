@@ -1,0 +1,42 @@
+graph LR
+  Student(("Student / Public"))
+  Staff(("Departmental Staff / Exam Officer"))
+  Admin(("Academic Registrar / Admin"))
+
+  subgraph AcadexSystem ["Acadex: Academic Calendar Management System"]
+    UC1(["View Academic Calendar (Month / Agenda)"])
+    UC2(["Filter by Session, Semester, Category"])
+    UC3(["Inspect Event Revisions & Historical Dates"])
+    UC4(["Subscribe to Personal iCal Feed (.ics)"])
+    UC5(["Export / Print Semester Calendar (PDF)"])
+    UC6(["Submit Departmental Event Proposal"])
+    UC7(["Track Proposal Approval Status"])
+    UC8(["Manage Academic Sessions & Semesters"])
+    UC9(["Manage Event Categories & Colours"])
+    UC10(["Manage Institutional Venues (Capacities & Clash Prevention)"])
+    UC11(["Approve / Reject Departmental Submissions"])
+    UC12(["Create, Reschedule & Cancel Official Events"])
+    UC13(["Bulk Import Events via Validated CSV"])
+    UC14(["Inspect System Audit Log"])
+  end
+
+  Student --> UC1
+  Student --> UC2
+  Student --> UC3
+  Student --> UC4
+  Student --> UC5
+
+  Staff --> UC1
+  Staff --> UC2
+  Staff --> UC3
+  Staff --> UC4
+  Staff --> UC6
+  Staff --> UC7
+
+  Admin --> UC8
+  Admin --> UC9
+  Admin --> UC10
+  Admin --> UC11
+  Admin --> UC12
+  Admin --> UC13
+  Admin --> UC14

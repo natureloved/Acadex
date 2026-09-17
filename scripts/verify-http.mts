@@ -153,19 +153,21 @@ async function main(): Promise<void> {
     check(response.status === 200, `${path} renders for an admin (${response.status})`);
   }
 
-  section("Audience targeting on the public calendar");
+  section("Calendar gating and audience targeting");
   const wholeUniversity = "Registration for New Students (First Semester)";
   const departmentScoped = "Department of Computer Science Seminar Series";
   const levelScoped = "400 Level Project Defence Orientation";
   const staffOnly = "Faculty of Science Board Meeting";
 
-  const anon = (await get("/calendar?range=all")).html;
-  const student = (await get("/calendar?range=all", studentCookie)).html;
+  const anonResponse = await get("/calendar?range=all");
+  check(
+    anonResponse.status === 307 && anonResponse.location.includes("/login"),
+    `anonymous visitor is redirected to login when accessing calendar (${anonResponse.status})`,
+  );
 
-  check(anon.includes(wholeUniversity), "anonymous: sees whole-university events");
-  check(!anon.includes(departmentScoped), "anonymous: no department-targeted events");
-  check(!anon.includes(levelScoped), "anonymous: no level-targeted events");
-  check(!anon.includes(staffOnly), "anonymous: no staff-only events");
+  const studentResponse = await get("/calendar?view=agenda&range=all", studentCookie);
+  check(studentResponse.status === 200, `signed-in student can access calendar (${studentResponse.status})`);
+  const student = studentResponse.html;
 
   check(student.includes(wholeUniversity), "student: still sees whole-university events");
   check(student.includes(departmentScoped), "student: sees their department's events");

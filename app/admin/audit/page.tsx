@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 /** Pretty-print the stored metadata, tolerating rows with none. */
 function summarise(metaJson: string | null): string {
-  if (!metaJson) return "—";
+  if (!metaJson) return "-";
   try {
     const parsed = JSON.parse(metaJson) as Record<string, unknown>;
     const parts = Object.entries(parsed).map(([key, value]) => {

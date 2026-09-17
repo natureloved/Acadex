@@ -1,0 +1,34 @@
+flowchart TD
+  Start(["Start: Propose Event (E_new) with startA, endA, venueId, semesterId"]) --> CheckVenue{"Is institutional venue specified (venueId != null)?"}
+
+  CheckVenue -- No --> CheckSemester{"Does [startA, endA] fall within Semester bounds?"}
+  CheckVenue -- Yes --> QueryVenueEvents["Query existing events (E_existing) sharing venueId<br/>where status NOT IN ('CANCELLED', 'REJECTED')"]
+
+  QueryVenueEvents --> OverlapFormula{"Does interval overlap?<br/>(startA < endB) AND (startB < endA)"}
+
+  OverlapFormula -- Yes --> FlagVenueClash["Flag Warning: Venue clash at selected facility<br/>(Overlaps with existing booked event)"]
+  OverlapFormula -- No --> CheckSemester
+
+  FlagVenueClash --> CheckSemester
+
+  CheckSemester -- No --> FlagSemesterBound["Flag Warning: Event dates fall outside semester start/end window"]
+  CheckSemester -- Yes --> QueryAudienceEvents["Query concurrent events in semester sharing target audience"]
+
+  FlagSemesterBound --> QueryAudienceEvents
+
+  QueryAudienceEvents --> CheckExamClash{"Does event overlap an Examination period<br/>for the same audience?"}
+
+  CheckExamClash -- Yes --> FlagExamWarning["Flag Warning: Overlaps examination window"]
+  CheckExamClash -- No --> CheckTargetOverlap{"Does event overlap another event<br/>targeted at same Faculty/Dept/Level?"}
+
+  FlagExamWarning --> CheckTargetOverlap
+
+  CheckTargetOverlap -- Yes --> FlagOverlapWarning["Flag Warning: Concurrent audience clash"]
+  CheckTargetOverlap -- No --> CollateWarnings["Collate All Warnings"]
+
+  FlagOverlapWarning --> CollateWarnings
+
+  CollateWarnings --> ResultDecision{"Are there blocking errors or warnings?"}
+  ResultDecision -- Non-blocking Warnings --> DisplayWarnings["Render visual warnings on edit screen / Return warnings in API"]
+  ResultDecision -- Clean --> ProceedCommit["Commit Event to Database & Append Revision"]
+  DisplayWarnings --> ProceedCommit

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { RevisionTimeline } from "@/components/revision-timeline";
 import {
@@ -39,13 +39,16 @@ export async function generateMetadata(
     title: event.title,
     description:
       event.description?.slice(0, 155) ??
-      `${formatDateRange(event.startAt, event.endAt)} — LASU academic calendar`,
+      `${formatDateRange(event.startAt, event.endAt)} · LASU academic calendar`,
   };
 }
 
 export default async function EventDetailPage(props: PageProps<"/calendar/[id]">) {
   const { id } = await props.params;
   const viewer = await getCurrentUser();
+  if (!viewer) {
+    redirect(`/login?next=${encodeURIComponent(`/calendar/${id}`)}`);
+  }
 
   const event = await getEventForViewer(id, viewerFrom(viewer));
 
@@ -210,19 +213,19 @@ export default async function EventDetailPage(props: PageProps<"/calendar/[id]">
       </section>
 
       <section className="mt-8" aria-labelledby="details-heading">
-        <h2 id="details-heading" className="text-sm font-semibold text-slate-900">
+        <h2 id="details-heading" className="font-['Fraunces'] text-lg font-medium text-[var(--ink)]">
           Event details
         </h2>
-        <dl className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <dl className="mt-3 divide-y divide-[var(--line)] overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)]">
           {details.map((detail) => (
             <div
               key={detail.label}
               className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-3 text-sm sm:flex-nowrap"
             >
-              <dt className="w-32 shrink-0 font-medium text-slate-500">
+              <dt className="w-32 shrink-0 font-['Spline_Sans_Mono'] text-xs uppercase tracking-wider text-[var(--ink-3)]">
                 {detail.label}
               </dt>
-              <dd className="text-slate-800">{detail.value}</dd>
+              <dd className="font-medium text-[var(--ink)]">{detail.value}</dd>
             </div>
           ))}
         </dl>
@@ -234,10 +237,10 @@ export default async function EventDetailPage(props: PageProps<"/calendar/[id]">
 
       {!wasRescheduled && revisions.length > 0 ? (
         <section className="mt-8" aria-labelledby="history-heading">
-          <h2 id="history-heading" className="text-sm font-semibold text-slate-900">
+          <h2 id="history-heading" className="font-['Fraunces'] text-lg font-medium text-[var(--ink)]">
             Change history
           </h2>
-          <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--card)] p-4">
             <RevisionTimeline revisions={revisions} />
           </div>
         </section>

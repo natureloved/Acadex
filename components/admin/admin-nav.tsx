@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/admin/events", label: "Events" },
   { href: "/admin/sessions", label: "Sessions" },
   { href: "/admin/categories", label: "Categories" },
+  { href: "/admin/venues", label: "Venues" },
   { href: "/admin/import", label: "Import" },
   { href: "/admin/audit", label: "Audit" },
 ] as const;

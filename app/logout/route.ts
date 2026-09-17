@@ -1,5 +1,5 @@
 /**
- * /logout — clears the session cookie and returns to the landing page.
+ * /logout : clears the session cookie and returns to the landing page.
  *
  * The header uses the `logoutAction` server action instead; this route handler
  * exists so that a plain link or a form post to `/logout` also works (useful

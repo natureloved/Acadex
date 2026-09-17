@@ -27,6 +27,7 @@ export default async function NewEventPage() {
             description: "",
             categoryId: "",
             semesterId: "",
+            venueId: "",
             startDate: today,
             endDate: today,
             startTime: "09:00",

@@ -32,10 +32,10 @@ export default async function RegisterPage(props: PageProps<"/register">) {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+      <h1 className="font-['Fraunces'] text-2xl font-medium tracking-tight text-[var(--ink)] sm:text-3xl">
         Create a student account
       </h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1.5 text-sm text-[var(--ink-2)]">
         Self-registration is for students. Staff and administrator accounts are
         created by the registry.
       </p>
@@ -43,7 +43,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
       {message ? (
         <p
           role="alert"
-          className="mt-5 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-800 ring-1 ring-rose-600/20"
+          className="mt-5 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-900 ring-1 ring-rose-600/30"
         >
           {message}
         </p>
@@ -166,9 +166,9 @@ export default async function RegisterPage(props: PageProps<"/register">) {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-5 text-sm text-[var(--ink-2)]">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-blue-700 hover:underline">
+        <Link href="/login" className="font-semibold text-[var(--green)] hover:underline">
           Sign in
         </Link>
       </p>

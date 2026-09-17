@@ -6,7 +6,7 @@ import { icsFilename, icsNotFound, icsResponse } from "@/lib/ics-response";
 import { buildEventCalendar } from "@/lib/services/ics";
 
 /**
- * "Download this event" — a one-event `.ics` file.
+ * "Download this event" : a one-event `.ics` file.
  *
  * Served as an attachment (`Content-Disposition`) because this is a deliberate
  * download rather than a feed: the browser saves it and hands it to the calendar
@@ -14,7 +14,7 @@ import { buildEventCalendar } from "@/lib/services/ics";
  *
  * The viewer is resolved from the session and the same `getEventForViewer` gate
  * as the detail page is applied, so this route cannot be used to fetch a draft, a
- * staff-only notice or an out-of-audience event by id — it 404s exactly where the
+ * staff-only notice or an out-of-audience event by id : it 404s exactly where the
  * page does.
  */
 export const dynamic = "force-dynamic";

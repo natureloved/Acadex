@@ -33,6 +33,7 @@ export type EventFormDefaults = {
   description: string;
   categoryId: string;
   semesterId: string;
+  venueId?: string;
   startDate: string;
   endDate: string;
   startTime: string;
@@ -243,12 +244,38 @@ export function EventForm({
           </>
         ) : null}
 
-        <div className="sm:col-span-2">
-          <Field label="Venue" htmlFor="location" hint="Optional.">
+        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+          <Field
+            label="Institutional Venue"
+            htmlFor="venueId"
+            hint="Select an official venue to enable automated collision detection."
+          >
+            <select
+              id="venueId"
+              name="venueId"
+              defaultValue={value("venueId", defaults.venueId ?? "")}
+              className={inputClasses}
+            >
+              <option value="">No formal venue assigned / Custom location</option>
+              {options.venues.map((venue) => (
+                <option key={venue.id} value={venue.id}>
+                  {venue.name} ({venue.code})
+                  {venue.capacity ? ` · Cap: ${venue.capacity}` : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field
+            label="Custom Location / Notes"
+            htmlFor="location"
+            hint="Classroom, virtual link, or supplementary venue details."
+          >
             <input
               id="location"
               name="location"
               maxLength={200}
+              placeholder="e.g. Science Lab 2 or Zoom Link"
               defaultValue={value("location", defaults.location)}
               className={inputClasses}
             />
