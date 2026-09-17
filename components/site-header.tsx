@@ -76,7 +76,7 @@ export async function SiteHeader() {
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full border border-[var(--line-strong)] bg-transparent px-3.5 py-1 text-xs font-semibold text-[var(--ink)] transition hover:bg-[var(--ink)] hover:text-[var(--paper)] active:scale-[0.98]"
+                  className="inline-flex items-center rounded-full border border-[var(--line-strong)] bg-[var(--card)] px-3.5 py-1 text-xs font-semibold text-[var(--ink)] transition hover:bg-[#EAF5EE] hover:border-[var(--green)] hover:text-[#165A3D] active:scale-[0.98]"
                 >
                   Sign out
                 </button>

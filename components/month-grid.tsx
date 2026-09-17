@@ -262,7 +262,7 @@ export function MonthGrid({
 
                     <Link
                       href={`/calendar/${event.id}`}
-                      className="rounded-full border border-[var(--line-strong)] bg-[var(--card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-2xs transition hover:bg-[var(--paper-2)] active:scale-[0.98]"
+                      className="rounded-full border border-[var(--line-strong)] bg-[var(--card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-2xs transition hover:bg-[#EAF5EE] hover:border-[var(--green)] hover:text-[#165A3D] active:scale-[0.98]"
                     >
                       View details
                     </Link>

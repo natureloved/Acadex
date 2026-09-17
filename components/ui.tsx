@@ -199,7 +199,7 @@ export const buttonPrimary =
 
 /** Secondary button using exact line-strong token and paper hover */
 export const buttonSecondary =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-[var(--line-strong)] bg-transparent px-5 py-2 text-sm font-semibold text-[var(--ink)] shadow-2xs transition hover:bg-[var(--ink)] hover:text-[var(--paper)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--card)] px-5 py-2 text-sm font-semibold text-[var(--ink)] shadow-2xs transition hover:bg-[#EAF5EE] hover:border-[var(--green)] hover:text-[#165A3D] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
 
 /** Form controls matching paper & ink tokens */
 export const inputClasses =

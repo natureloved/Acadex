@@ -213,9 +213,9 @@ h1, h2, h3 {
 }
 
 .btn-line:hover {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
+  background: #EAF5EE;
+  color: #165A3D;
+  border-color: var(--green);
   transform: translateY(-2px);
 }
 
