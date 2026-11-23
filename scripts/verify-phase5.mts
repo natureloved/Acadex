@@ -11,7 +11,7 @@
  * Three parts, matching the three parts of the feature:
  *
  *  1. The service, driven directly: create (and refuse to duplicate), list,
- *     count, mark one read, mark all read — including that one account can never
+ * count, mark one read, mark all read including that one account can never
  *     touch another account's notices.
  *  2. The reminder job, over temporary events created exactly seven days and one
  *     day out. It asserts who was told, what the notices say, that a second run
@@ -22,8 +22,8 @@
  *     (driven the way a browser with JavaScript disabled would, by posting the
  *     form's own `$ACTION_ID_*` field), and the fail-closed reminder endpoint.
  *
- * Everything it creates, it removes again — notifications, events, targets and
- * audit rows — and it restores every `readAt` it flipped. The closing section
+ * Everything it creates, it removes again notifications, events, targets and
+ * audit rows and it restores every `readAt` it flipped. The closing section
  * compares counts against a baseline captured before the first write.
  *
  * Exits non-zero if any check fails.
@@ -87,7 +87,7 @@ const { formatDateRange, formatRelativeDays } = await import("../lib/format");
 const notifications = await import("../lib/services/notifications");
 
 // ---------------------------------------------------------------------------
-// Date helpers — the job's rule is a UTC calendar-day rule, so the fixtures and
+// Date helpers the job's rule is a UTC calendar-day rule, so the fixtures and
 // the expectations are built the same way.
 // ---------------------------------------------------------------------------
 
@@ -173,7 +173,7 @@ const actionIdIn = (form: string) => /\$ACTION_ID_([A-Za-z0-9_-]+)/.exec(form)?.
 /**
  * The unread number the header renders, or null when it renders no badge at all.
  *
- * The badge is found the way a reader finds it — inside the "Notifications" link —
+ * The badge is found the way a reader finds it inside the "Notifications" link
  * and tags are stripped first so the `aria-label` cannot be mistaken for the
  * visible count.
  */
@@ -322,7 +322,7 @@ async function main(): Promise<void> {
   );
 
   // =========================================================================
-  section("2. createNotification — and its refusal to duplicate");
+  section("2. createNotification and its refusal to duplicate");
   // =========================================================================
 
   // A dedicated event, a month out, so the reminder job never looks at it.
@@ -398,7 +398,7 @@ async function main(): Promise<void> {
   });
   check(
     standaloneA.created && standaloneB.created,
-    "notices with no event are always written — there is nothing to dedupe against",
+    "notices with no event are always written there is nothing to dedupe against",
   );
 
   for (const outcome of [first, otherType, otherUser, standaloneA, standaloneB]) {
@@ -469,7 +469,7 @@ async function main(): Promise<void> {
   );
 
   // =========================================================================
-  section("4. Marking read — one account cannot touch another's");
+  section("4. Marking read one account cannot touch another's");
   // =========================================================================
 
   const staffUnreadBefore = await notifications.unreadCount(staff.id);
@@ -537,7 +537,7 @@ async function main(): Promise<void> {
   );
 
   // =========================================================================
-  section("5. The reminder job — who gets told");
+  section("5. The reminder job who gets told");
   // =========================================================================
 
   const t7EventId = await createFixtureEvent({
@@ -644,7 +644,7 @@ async function main(): Promise<void> {
   check(
     recipientsOf(staffOnlyEventId, "REMINDER_T1").size > 0 &&
       ![...recipientsOf(staffOnlyEventId, "REMINDER_T1")].some((id) => studentIds.has(id)),
-    "no student — seeded or otherwise — received the staff-only reminder",
+    "no student seeded or otherwise received the staff-only reminder",
   );
   // A student outside the department exists in the seed, which is what makes
   // this a real exclusion rather than a vacuous one.
@@ -787,7 +787,7 @@ async function main(): Promise<void> {
   });
   const runMeta = JSON.parse(runAudit.metaJson ?? "{}") as Record<string, unknown>;
   check(runAudit.action === "REMINDERS_RUN", "the run is recorded as REMINDERS_RUN");
-  check(runAudit.actorId === null, "the run has no actor — it is the system, not a person");
+  check(runAudit.actorId === null, "the run has no actor it is the system, not a person");
   check(
     runMeta.t7 === firstRun.t7 && runMeta.t1 === firstRun.t1 && runMeta.skipped === firstRun.skipped,
     "the audit metadata carries the run's counts",
@@ -995,7 +995,7 @@ async function main(): Promise<void> {
   report(
     configuredOnServer
       ? "the server has CRON_SECRET, so the refusal is 401 (an unconfigured server answers 503 instead)"
-      : "the server has NO CRON_SECRET, so the job refuses to run at all — 503, which is failing closed",
+      : "the server has NO CRON_SECRET, so the job refuses to run at all 503, which is failing closed",
   );
 
   const secret = process.env.CRON_SECRET;
@@ -1046,7 +1046,7 @@ async function main(): Promise<void> {
     const authorizedGet = await get("/api/reminders/run");
     check(
       authorizedGet.status === 401 || authorizedGet.status === 503,
-      `the GET handler is no more privileged than the POST — a bare GET is refused (${authorizedGet.status})`,
+      `the GET handler is no more privileged than the POST a bare GET is refused (${authorizedGet.status})`,
     );
 
     const auditsAfter = await prisma.auditLog.count({
@@ -1136,7 +1136,7 @@ async function main(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Baseline — captured before the first write, so the closing checks compare like
+// Baseline captured before the first write, so the closing checks compare like
 // with like.
 // ---------------------------------------------------------------------------
 

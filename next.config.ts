@@ -4,8 +4,8 @@ import type { NextConfig } from "next";
  * Response security headers.
  *
  * These are set here (rather than in `proxy.ts`) on purpose: `headers()` is
- * applied to *every* response the server produces — pages, route handlers, the
- * `.ics` feeds and static assets alike — whereas `proxy.ts` has a deliberately
+ * applied to *every* response the server produces pages, route handlers, the
+ * `.ics` feeds and static assets alike whereas `proxy.ts` has a deliberately
  * narrow matcher (`/admin/:path*`, `/staff/:path*`) that exists to gate access,
  * and it never sees the public calendar or the feeds.
  *
@@ -22,7 +22,7 @@ export function securityHeaders(isProduction: boolean): { key: string; value: st
     //      real, submitted domain (hstspreload.org) and cannot be undone
     //      quickly, so it is left to the deployment to opt into.
     //   2. Production only. Browsers ignore STS over plain HTTP *except* for
-    //      localhost, which every browser treats as a trustworthy origin — so
+    // localhost, which every browser treats as a trustworthy origin so
     //      sending it in development would pin http://localhost:3001 to HTTPS
     //      and break the local server for every other project on the machine.
     ...(isProduction
@@ -57,7 +57,7 @@ export function securityHeaders(isProduction: boolean): { key: string; value: st
  *
  * `script-src 'self' 'unsafe-inline'` is the significant one. Next.js streams
  * the App Router payload to the browser as *inline* `<script>` elements
- * (`self.__next_f.push(...)`) — they are part of the HTML, not separate files,
+ * (`self.__next_f.push(...)`) they are part of the HTML, not separate files,
  * so no `'self'`-only policy can execute them and the page renders as an empty
  * shell. `'unsafe-inline'` is therefore required by the framework as configured
  * here. What it costs is bounded by the rest of the app: every value that
@@ -94,8 +94,8 @@ export function securityHeaders(isProduction: boolean): { key: string; value: st
  *      to the framework scripts and page bundles it emits; `script-src` would
  *      become `'self' 'nonce-…' 'strict-dynamic'` and `'unsafe-inline'` would
  *      go away (browsers ignore `'unsafe-inline'` once a nonce is present).
- *   3. Every page would have to be dynamically rendered — a nonce cannot exist
- *      in a document rendered at build time — which removes static caching for
+ * 3. Every page would have to be dynamically rendered a nonce cannot exist
+ * in a document rendered at build time which removes static caching for
  *      the whole site. Acadex's pages already read the session cookie or the
  *      database, so most of them are dynamic today; the ones that are not would
  *      have to opt in.
@@ -104,7 +104,7 @@ export function securityHeaders(isProduction: boolean): { key: string; value: st
  *      nonces do not apply to attributes.
  *
  * That is a real, worthwhile change, but it belongs with a deployment that
- * terminates TLS and has a measured caching story — not with this phase, whose
+ * terminates TLS and has a measured caching story not with this phase, whose
  * brief is to add a policy that demonstrably does not break the application.
  */
 export function contentSecurityPolicy(isProduction: boolean): string {
@@ -119,7 +119,7 @@ export function contentSecurityPolicy(isProduction: boolean): string {
     // No plugin content, and no <base> rewriting to redirect relative URLs.
     "object-src 'none'",
     "base-uri 'self'",
-    // A form may only post back to this site — the login form and the admin
+    // A form may only post back to this site the login form and the admin
     // forms are all server actions on the same origin.
     "form-action 'self'",
     // Nothing may frame Acadex, and Acadex frames nothing.
@@ -154,7 +154,7 @@ const nextConfig: NextConfig = {
        *
        * Next.js defaults to 1 MB. Acadex's actions take form fields and one
        * re-posted CSV, and the CSV is capped at 256 KB in
-       * `lib/actions/admin-import.ts` — so 512 KB is double the largest
+       * `lib/actions/admin-import.ts` so 512 KB is double the largest
        * legitimate payload and still halves what an unauthenticated caller can
        * make the server buffer before any of our own validation runs. Anything
        * larger is refused by the framework before it is parsed.

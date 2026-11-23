@@ -1,5 +1,5 @@
 /**
- * Session tokens — signing and verification only.
+ * Session tokens signing and verification only.
  *
  * This module is deliberately free of `next/headers` and of Prisma so that it
  * can be imported from `proxy.ts` (which runs before the app, outside the React
@@ -8,7 +8,7 @@
  * The session is a signed JWT (JWS, HS256) stored in an httpOnly cookie. It is
  * *signed*, not encrypted: it carries only an id, name, email and role, none of
  * which are secret. Every authorisation decision is still re-checked against
- * the database in `lib/auth.ts` — the token is a hint, never the source of
+ * the database in `lib/auth.ts` the token is a hint, never the source of
  * truth.
  */
 import { jwtVerify, SignJWT } from "jose";

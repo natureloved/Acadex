@@ -2,8 +2,8 @@
  * Single source of truth for the string "enums" used across Acadex.
  *
  * SQLite has no native enum type, so the Prisma schema stores these as String
- * columns (see prisma/schema.prisma). Declaring the allowed values here — as
- * `as const` tuples plus derived union types — gives us the same compile-time
+ * columns (see prisma/schema.prisma). Declaring the allowed values here as
+ * `as const` tuples plus derived union types gives us the same compile-time
  * safety an enum would, and keeps the validation logic in one place.
  */
 
@@ -45,7 +45,7 @@ export type RevisionType = (typeof REVISION_TYPES)[number];
 /**
  * Notification kinds.
  *
- * `REMINDER_T7` and `REMINDER_T1` are the scheduled ones — one week and one day
+ * `REMINDER_T7` and `REMINDER_T1` are the scheduled ones one week and one day
  * before an event starts. They are written at most once per (user, event, type),
  * which is what makes re-running the reminder job harmless. The `EVENT_*` values
  * are raised by the event service when the registry moves or cancels a date, and
@@ -67,7 +67,7 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 /** Undergraduate levels offered by LASU. */
 export const LEVELS = [100, 200, 300, 400, 500] as const;
 
-/** Revision kinds that mean "the dates moved" — the UI flags these. */
+/** Revision kinds that mean "the dates moved" the UI flags these. */
 export const RESCHEDULE_REVISIONS: readonly RevisionType[] = [
   "RESCHEDULED",
   "UPDATED",

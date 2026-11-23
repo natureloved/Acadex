@@ -1,16 +1,16 @@
 /**
- * Acadex seed script — Lagos State University demo data.
+ * Acadex seed script Lagos State University demo data.
  *
  * Seeds two academic sessions:
  *
- *   • 2025/2026 — the ARCHIVED session. Dates transcribed from LASU's
+ * • 2025/2026 the ARCHIVED session. Dates transcribed from LASU's
  *     published calendar and its re-announced one-week extension.
- *   • 2026/2027 — the CURRENT (active) session. Every date in this section
- *     is PROVISIONAL and UNVERIFIED — see the warning block directly above
+ * • 2026/2027 the CURRENT (active) session. Every date in this section
+ * is PROVISIONAL and UNVERIFIED see the warning block directly above
  *     its event list before trusting or reusing any of them.
  *
  * ===========================================================================
- *  ⚠️  DEMO DATA — VERIFY BEFORE SUBMISSION  ⚠️
+ * ⚠️ DEMO DATA VERIFY BEFORE SUBMISSION ⚠️
  * ===========================================================================
  *  The 2025/2026 dates below were transcribed from LASU's published academic
  *  calendar and from subsequent re-announcements of extensions. The calendar
@@ -166,7 +166,7 @@ const FACULTIES: {
 ];
 
 // ---------------------------------------------------------------------------
-// Event categories — each with a distinct hex colour for the calendar chips.
+// Event categories each with a distinct hex colour for the calendar chips.
 // ---------------------------------------------------------------------------
 
 const CATEGORIES: { name: string; slug: string; color: string }[] = [
@@ -254,7 +254,7 @@ const EVENTS_2025_2026: SeedEvent[] = [
     status: "PUBLISHED",
   },
   {
-    key: "matriculation", // [ASSUMED] plausible date — not a published LASU date
+    key: "matriculation", // [ASSUMED] plausible date not a published LASU date
     title: "Matriculation Ceremony for 2025/2026 Fresh Students",
     description:
       "Formal matriculation of newly admitted students into Lagos State University for the 2025/2026 academic session. Matriculating students are to be seated by 8:00am in full matriculation dress.",
@@ -269,7 +269,7 @@ const EVENTS_2025_2026: SeedEvent[] = [
     key: "exam-timetable-draft",
     title: "Release of First Semester Examination Timetable",
     description:
-      "Draft verification of the first semester examination timetable. This entry is intentionally left in DRAFT status to demonstrate the draft/publish workflow — it is not visible on the public calendar until an administrator publishes it.",
+      "Draft verification of the first semester examination timetable. This entry is intentionally left in DRAFT status to demonstrate the draft/publish workflow it is not visible on the public calendar until an administrator publishes it.",
     categorySlug: "examinations",
     semester: "FIRST",
     start: "2026-01-05",
@@ -331,7 +331,7 @@ const EVENTS_2025_2026: SeedEvent[] = [
     key: "senate-results-meeting",
     title: "Senate Meeting: Consideration of First Semester Results",
     description:
-      "Senate sits to consider and approve the first semester examination results. Staff only — this entry is restricted so it never appears on the public calendar.",
+      "Senate sits to consider and approve the first semester examination results. Staff only this entry is restricted so it never appears on the public calendar.",
     categorySlug: "meeting",
     semester: "SECOND",
     start: "2026-03-10",
@@ -341,7 +341,7 @@ const EVENTS_2025_2026: SeedEvent[] = [
     location: "Senate Chamber",
   },
   {
-    key: "convocation", // [ASSUMED] plausible date — not a published LASU date
+    key: "convocation", // [ASSUMED] plausible date not a published LASU date
     title: "Convocation Ceremony and Award of Degrees",
     description:
       "Convocation ceremony for the award of first and higher degrees, diplomas and honorary degrees. Graduands should collect their academic gowns from the Faculty Officer ahead of the ceremony.",
@@ -357,7 +357,7 @@ const EVENTS_2025_2026: SeedEvent[] = [
     // result of two recorded reschedules, which is why the revision history exists
     title: "Second Semester Examinations",
     description:
-      "Second semester examinations for all undergraduate levels. This entry carries a revision history because the examination window was shifted twice after it was first approved — see the change history on this event.",
+      "Second semester examinations for all undergraduate levels. This entry carries a revision history because the examination window was shifted twice after it was first approved see the change history on this event.",
     categorySlug: "examinations",
     semester: "SECOND",
     start: "2026-06-01",
@@ -403,7 +403,7 @@ const EVENTS_2025_2026: SeedEvent[] = [
     key: "sessional-break",
     title: "Sessional Break Commences",
     description:
-      "Sessional break commences for the 2025/2026 academic session. This date was moved from 20 July to 27 July 2026 following a one-week extension of the approved academic calendar — see the change history on this event.",
+      "Sessional break commences for the 2025/2026 academic session. This date was moved from 20 July to 27 July 2026 following a one-week extension of the approved academic calendar see the change history on this event.",
     categorySlug: "break",
     semester: "SECOND",
     start: "2026-07-27",
@@ -460,10 +460,10 @@ const EVENTS_2025_2026: SeedEvent[] = [
 ];
 
 // ===========================================================================
-// EVENTS — 2026/2027 academic session (CURRENT)
+// EVENTS 2026/2027 academic session (CURRENT)
 // ===========================================================================
 //
-// PROVISIONAL — UNVERIFIED
+// PROVISIONAL UNVERIFIED
 // ------------------------
 // Every date in this section is a PLACEHOLDER FOR DEMONSTRATION ONLY.
 //
@@ -546,7 +546,7 @@ const EVENTS_2026_2027: SeedEvent[] = [
     session: "2026/2027",
     title: "Release of First Semester Examination Timetable (2026/2027)",
     description:
-      "Draft verification of the first semester examination timetable for the current session. This entry is intentionally left in DRAFT status to demonstrate the draft/publish workflow — it is not visible on the public calendar until an administrator publishes it.",
+      "Draft verification of the first semester examination timetable for the current session. This entry is intentionally left in DRAFT status to demonstrate the draft/publish workflow it is not visible on the public calendar until an administrator publishes it.",
     categorySlug: "examinations",
     semester: "FIRST",
     start: "2027-01-11",
@@ -555,7 +555,7 @@ const EVENTS_2026_2027: SeedEvent[] = [
     location: "Senate Building",
   },
   {
-    key: "2026-27-matriculation", // [ASSUMED] plausible date — not a published LASU date
+    key: "2026-27-matriculation", // [ASSUMED] plausible date not a published LASU date
     session: "2026/2027",
     title: "Matriculation Ceremony for 2026/2027 Fresh Students",
     description:
@@ -610,7 +610,7 @@ const EVENTS_2026_2027: SeedEvent[] = [
     session: "2026/2027",
     title: "Senate Meeting: Consideration of First Semester Results (2026/2027)",
     description:
-      "Senate sits to consider and approve the first semester examination results for the current session. Staff only — this entry is restricted so it never appears on the public calendar.",
+      "Senate sits to consider and approve the first semester examination results for the current session. Staff only this entry is restricted so it never appears on the public calendar.",
     categorySlug: "meeting",
     semester: "SECOND",
     start: "2027-03-09",
@@ -633,7 +633,7 @@ const EVENTS_2026_2027: SeedEvent[] = [
     location: "Examination halls, LASU Ojo Campus",
   },
   {
-    key: "2026-27-convocation", // [ASSUMED] plausible date — not a published LASU date
+    key: "2026-27-convocation", // [ASSUMED] plausible date not a published LASU date
     session: "2026/2027",
     title: "Convocation Ceremony and Award of Degrees (2026/2027)",
     description:
@@ -793,7 +793,7 @@ async function main() {
     },
   });
 
-  console.log(`  users: 3 (admin, staff, student) — password "${DEMO_PASSWORD}"`);
+  console.log(` users: 3 (admin, staff, student) password "${DEMO_PASSWORD}"`);
 
   // --- Categories ----------------------------------------------------------
   const categoryIdBySlug = new Map<string, string>();
@@ -828,7 +828,7 @@ async function main() {
       ],
     },
     {
-      // Current session. PROVISIONAL — UNVERIFIED dates; see the warning
+      // Current session. PROVISIONAL UNVERIFIED dates; see the warning
       // block above EVENTS_2026_2027.
       name: "2026/2027",
       startDate: "2026-09-17",
@@ -934,7 +934,7 @@ async function main() {
         changedAt: publishedOn,
         note:
           sessionName === "2026/2027"
-            ? "Event created from the PROVISIONAL 2026/2027 academic calendar (unverified — see docs/seed-data-sources.md)."
+            ? "Event created from the PROVISIONAL 2026/2027 academic calendar (unverified see docs/seed-data-sources.md)."
             : "Event created from the approved 2025/2026 academic calendar.",
         before: null,
         after: { startAt: event.start, endAt: event.end },
@@ -1020,7 +1020,7 @@ async function main() {
         eventId: currentRegistrationId,
         type: "REMINDER",
         title: "2026/2027 registration opens this week",
-        body: "First semester registration for newly admitted students of the 2026/2027 academic session opens on Thursday, 17 September 2026. (Provisional demo date — check the official calendar.)",
+        body: "First semester registration for newly admitted students of the 2026/2027 academic session opens on Thursday, 17 September 2026. (Provisional demo date check the official calendar.)",
       },
     ],
   });
@@ -1036,11 +1036,11 @@ async function main() {
         metaJson: JSON.stringify({
           sessions: [
             "2025/2026 (approved calendar)",
-            "2026/2027 (provisional — unverified)",
+            "2026/2027 (provisional unverified)",
           ],
           events: EVENTS.length,
           source: "prisma/seed.ts",
-          warning: "Demo data — verify against official LASU calendar before submission",
+          warning: "Demo data verify against official LASU calendar before submission",
         }),
         createdAt: d("2025-09-20"),
       },

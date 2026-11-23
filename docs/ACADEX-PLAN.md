@@ -1,4 +1,4 @@
-# Acadex — Academic Calendar Management System
+# Acadex Academic Calendar Management System
 
 **Type:** Final Year Diploma Project (Computer Science, Faculty of Computing and Information Technology)
 **Institution context:** Lagos State University (LASU)
@@ -39,9 +39,9 @@ These become "future work".
 LASU publishes the approved calendar as a **static page**, then re-announces **extensions as
 separate announcements**:
 
-- `lasu.edu.ng/home/pages/?id=calendar` — static "Academic Calendar" page.
-- `lasu.edu.ng/home/news/read.php?id=576` — "Approved Calendar for the 2025/2026 Academic Session" posted as news.
-- `x.com/LASUOfficial` / `facebook.com/lasuinfo` — "EXTENSION OF APPROVED ACADEMIC CALENDAR BY ONE (1) WEEK"; "Sessional Break shall now run from Monday, 27th July".
+- `lasu.edu.ng/home/pages/?id=calendar` static "Academic Calendar" page.
+- `lasu.edu.ng/home/news/read.php?id=576` "Approved Calendar for the 2025/2026 Academic Session" posted as news.
+- `x.com/LASUOfficial` / `facebook.com/lasuinfo` "EXTENSION OF APPROVED ACADEMIC CALENDAR BY ONE (1) WEEK"; "Sessional Break shall now run from Monday, 27th July".
 
 That is the failure mode Acadex addresses: **the calendar is a document, not a system.** The
 original date stays stale on the page while the correction lives in a social post, forcing the
@@ -72,13 +72,13 @@ Commercial academic-calendar tooling converges on a recognisable feature set:
 - Categorised events: exams, holidays, registration, deadlines, colour-coded.
 - Subscription/export: ICS feed subscribable from Google Calendar / Outlook, plus PDF/print.
 - Targeted reminders: email/push before key dates.
-- Change communication: the differentiator in reviews — when a date changes, tell subscribers *what changed*.
+- Change communication: the differentiator in reviews when a date changes, tell subscribers *what changed*.
 
 ### 2.4 Stack discussion
 
-- **Next.js + Prisma + Postgres** — one deployable, server-rendered public calendar (good for
+- **Next.js + Prisma + Postgres** one deployable, server-rendered public calendar (good for
   SEO/shareability), typed end-to-end, migrations give you a printable schema history.
-- **MERN (React + Express + MongoDB)** — maximum familiarity, but needs a separate API deploy
+- **MERN (React + Express + MongoDB)** maximum familiarity, but needs a separate API deploy
   and a hosted Mongo (Atlas) account, and its schemaless nature weakens the "database design"
   chapter examiners like to probe.
 
@@ -103,7 +103,7 @@ and Postgres for deployment.**
 Why this is the best fit:
 
 1. **Runs offline on this machine with no extra installs.** SQLite is a file; `npm run dev` just works.
-2. **One codebase, one language** — every layer is explainable, no separate API host to break.
+2. **One codebase, one language** every layer is explainable, no separate API host to break.
 3. **Server-side rendering** for the public calendar = shareable links, matching how universities publish.
 4. **Prisma migrations + typed schema** give the ER diagram and database-design chapter almost for free.
 5. **Free deployment** (Vercel + Neon/Supabase Postgres) so there is a live URL in the report and the demo.
@@ -142,7 +142,7 @@ Scheduler (node-cron / Vercel Cron) --> Reminder dispatch --> Email (Nodemailer/
 | `Semester` | id, sessionId, type(FIRST\|SECOND), startDate, endDate |
 | `EventCategory` | id, name, slug, color, icon |
 | `CalendarEvent` | id, title, description, categoryId, semesterId, startAt, endAt, allDay, location, status(DRAFT\|PUBLISHED\|CANCELLED), visibility(PUBLIC\|STAFF_ONLY), scope(ALL\|FACULTY\|DEPARTMENT\|LEVEL), createdById, publishedAt, version |
-| `EventTarget` | eventId, targetType, targetId — many-to-many targeting of faculty/department/level |
+| `EventTarget` | eventId, targetType, targetId many-to-many targeting of faculty/department/level |
 | `EventRevision` | id, eventId, changedById, changedAt, changeType(CREATED\|UPDATED\|PUBLISHED\|RESCHEDULED\|CANCELLED), diff (JSON before/after) |
 | `Subscription` | id, userId, icsToken, scope filters, createdAt |
 | `Notification` | id, userId, eventId, type, channel, sentAt, status |
@@ -155,7 +155,7 @@ reminder job can notify exactly the users affected by that change.
 
 ### 3.3 Feature set
 
-**MVP — must ship (this is what you demo):**
+**MVP must ship (this is what you demo):**
 
 1. Auth + RBAC (admin / staff / student), hashed passwords, protected routes.
 2. Admin CRUD: sessions -> semesters -> events, with draft -> publish workflow.
@@ -168,18 +168,18 @@ reminder job can notify exactly the users affected by that change.
 9. **Change notices:** reschedule/cancel an event -> affected subscribers notified, event shows its revision history.
 10. Audit log + admin dashboard KPIs (events this week, next deadline, upcoming exams).
 
-**Stretch — only if time allows (otherwise "future work"):**
+**Stretch only if time allows (otherwise "future work"):**
 SMS via Termii/Twilio, PWA + offline caching, two-way Google Calendar API sync, department-authored
 events with approval workflow, analytics dashboard, multi-institution (tenant) support.
 
 ### 3.4 Non-functional requirements to state and test
 
-- **Mobile-first responsive** — the primary user is a student on a phone.
-- **Low-bandwidth friendly** — minimal client bundle, works on 3G; server-rendered public page.
-- **Accessibility** — WCAG AA contrast, keyboard-navigable calendar grid, semantic markup.
-- **Performance target** — public calendar first paint < 2.5s on throttled 3G.
-- **Security** — bcrypt/argon2 hashes, httpOnly/sameSite session cookies, server-side validation on every mutation, rate-limited login, role checks in the service layer (not just the UI).
-- **Data integrity** — Prisma migrations as versioned schema history.
+- **Mobile-first responsive** the primary user is a student on a phone.
+- **Low-bandwidth friendly** minimal client bundle, works on 3G; server-rendered public page.
+- **Accessibility** WCAG AA contrast, keyboard-navigable calendar grid, semantic markup.
+- **Performance target** public calendar first paint < 2.5s on throttled 3G.
+- **Security** bcrypt/argon2 hashes, httpOnly/sameSite session cookies, server-side validation on every mutation, rate-limited login, role checks in the service layer (not just the UI).
+- **Data integrity** Prisma migrations as versioned schema history.
 
 ---
 
@@ -194,11 +194,11 @@ events with approval workflow, analytics dashboard, multi-institution (tenant) s
 Standard Nigerian CS final-year structure, written from the real implementation:
 
 - **Front matter:** title page, declaration, certification, dedication, acknowledgements, abstract, TOC, list of figures/tables.
-- **Chapter 1 — Introduction:** background, problem statement (use the observed LASU re-announcement evidence), aim and objectives, scope and limitations, significance, definition of terms.
-- **Chapter 2 — Literature Review:** academic calendar systems, existing LASU process, comparable platforms, the iCalendar/ICS standard, RBAC, notification systems, summary and gap.
-- **Chapter 3 — System Analysis & Design:** methodology (Agile/incremental), data collection (questionnaire + interview + observation of the registry process), existing-system analysis, requirements, **Use Case, ERD, DFD level 0/1/2, class diagram, sequence diagram, architecture, UI mockups**, database schema, input/output design.
-- **Chapter 4 — Implementation & Testing:** stack justification, key code excerpts (ICS builder, reminder scheduler, revision tracking), screenshots, **test tables**: unit, integration, UAT with real students/staff, performance, security; usability evaluation (SUS score) — examiners like numbers.
-- **Chapter 5 — Summary, Conclusion & Recommendation:** achievements vs objectives, limitations, future work.
+- **Chapter 1 Introduction:** background, problem statement (use the observed LASU re-announcement evidence), aim and objectives, scope and limitations, significance, definition of terms.
+- **Chapter 2 Literature Review:** academic calendar systems, existing LASU process, comparable platforms, the iCalendar/ICS standard, RBAC, notification systems, summary and gap.
+- **Chapter 3 System Analysis & Design:** methodology (Agile/incremental), data collection (questionnaire + interview + observation of the registry process), existing-system analysis, requirements, **Use Case, ERD, DFD level 0/1/2, class diagram, sequence diagram, architecture, UI mockups**, database schema, input/output design.
+- **Chapter 4 Implementation & Testing:** stack justification, key code excerpts (ICS builder, reminder scheduler, revision tracking), screenshots, **test tables**: unit, integration, UAT with real students/staff, performance, security; usability evaluation (SUS score) examiners like numbers.
+- **Chapter 5 Summary, Conclusion & Recommendation:** achievements vs objectives, limitations, future work.
 - **Back matter:** references (APA), appendices (source code listing, questionnaire, sample output, user guide).
 
 ### 4.3 Diagrams
@@ -231,7 +231,7 @@ Roughly **6–8 weeks part-time**, or 3–4 weeks full-time.
 | Scope creep into registration/results/LMS | Non-goals section in Chapter 1; stretch list parked as future work |
 | No local DB / Docker | SQLite for dev, Postgres only in deployment |
 | Email delivery unreliable during demo | In-app notification centre is primary; email secondary and logged |
-| LASU dates change again | That is the *feature* — revision history + change notices |
+| LASU dates change again | That is the *feature* revision history + change notices |
 | Supervisor expects PHP/Laravel or MERN | Architecture is stack-portable; confirm before Phase 1 (decision D1) |
 | "It's just a CRUD app" criticism | Revision tracking, ICS/calendar interop, audience targeting, scheduling and evaluation are the depth |
 

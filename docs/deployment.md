@@ -6,7 +6,7 @@ without guessing, and it separates two things that are easy to conflate:
 - what is **already done** in the repository, and
 - what needs **your accounts** and your decisions.
 
-Nothing here has been executed for you. The project has never been deployed — what
+Nothing here has been executed for you. The project has never been deployed what
 *has* been verified is the production build, the deployment smoke test against it,
 and the hardening documented in [`security-checklist.md`](./security-checklist.md).
 
@@ -34,7 +34,7 @@ There is a second thing to know before starting, and it is the one that catches
 people out:
 
 > **Prisma migrations are provider-specific.** The files in `prisma/migrations/`
-> are SQLite SQL — `TEXT`, `INTEGER`, `PRAGMA` and so on. They cannot be applied to
+> are SQLite SQL `TEXT`, `INTEGER`, `PRAGMA` and so on. They cannot be applied to
 > Postgres. A Postgres deployment needs **its own migration history**, produced
 > against the Postgres database.
 
@@ -75,7 +75,7 @@ it constructs one client and exports it.
 | --- | --- | --- | --- |
 | `DATABASE_URL` | yes | The database connection string | The app refuses to start: `lib/db.ts` throws a message telling you to copy `.env.example` |
 | `AUTH_SECRET` | yes | Signs and verifies session cookies | Nobody can sign in; `lib/session.ts` refuses to issue or verify a session when the secret is absent or shorter than 16 characters |
-| `CRON_SECRET` | for reminders | Authorises the reminder endpoint | `/api/reminders/run` returns **503** and does nothing — it fails closed on purpose |
+| `CRON_SECRET` | for reminders | Authorises the reminder endpoint | `/api/reminders/run` returns **503** and does nothing it fails closed on purpose |
 | `NODE_ENV` | set by the host | Enables production behaviour: HSTS, secure cookies, and suppressing the demo-credentials panel on the sign-in page | Defaults to development behaviour, which would advertise the demo password |
 | `ALLOW_DESTRUCTIVE_SEED` | never in production | Opt-in that lets `prisma/seed.ts` run with `NODE_ENV=production` | Correct behaviour: the seed refuses to run and says why |
 
@@ -99,7 +99,7 @@ on a developer machine; a deployed instance should not share it.
 3. **Import the repository** at the host (Vercel: *Add New → Project → Import*).
    Framework preset: Next.js. Build command `next build` (the default). Leave the
    output directory alone.
-4. **Set the environment variables** from section 2 in the host's dashboard —
+4. **Set the environment variables** from section 2 in the host's dashboard
    *not* in the repository. `.env` is git-ignored and must stay that way.
 5. **Apply the migrations** against the deployed database. Either let the platform
    run `npx prisma migrate deploy` as part of the build command, or run it once
@@ -114,7 +114,7 @@ on a developer machine; a deployed instance should not share it.
 ### A note on the `prisma` CLI in production
 
 `prisma` is a dev dependency. If the host's build runs `prisma migrate deploy`, make
-sure it is available at build time (it is, by default, on Vercel — dev dependencies
+sure it is available at build time (it is, by default, on Vercel dev dependencies
 are installed for the build). If your host strips them, move `prisma` to
 `dependencies` or run migrations from outside the build.
 
@@ -126,7 +126,7 @@ The reminder job is `POST`/`GET /api/reminders/run` and it fails closed: with no
 `CRON_SECRET` configured it returns 503, and with the wrong secret 401. It must run
 at least daily.
 
-**Vercel** — add `vercel.json` at the repository root:
+**Vercel** add `vercel.json` at the repository root:
 
 ```json
 {
@@ -142,7 +142,7 @@ at least daily.
 Vercel's cron requests include the secret automatically when `CRON_SECRET` is set
 as an environment variable for the project.
 
-**Any other host, or a machine** — a daily crontab line:
+**Any other host, or a machine** a daily crontab line:
 
 ```cron
 0 6 * * * curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" https://your-app.example.com/api/reminders/run
@@ -162,7 +162,7 @@ schtasks /create /tn "Acadex reminders" /tr "cmd /c cd C:\path\to\Acadex && npm 
 
 Either way, **the job is idempotent**: running it twice in a row creates nothing
 the second time, so a duplicate schedule or a retry is harmless. Each run writes one
-`REMINDERS_RUN` row to the audit log — which is how you can tell whether a silent
+`REMINDERS_RUN` row to the audit log which is how you can tell whether a silent
 scheduler has stopped firing.
 
 ---
@@ -175,7 +175,7 @@ BASE_URL=https://your-app.example.com npx tsx scripts/verify-deployment.mts
 
 It checks the health endpoint, the main pages, the public calendar feed, that the
 admin area refuses anonymous visitors, that the security headers are present, that
-HSTS appears only over HTTPS, and — importantly — that **the sign-in page no longer
+HSTS appears only over HTTPS, and importantly that **the sign-in page no longer
 advertises the demo credentials**. It writes nothing.
 
 Then, by hand:
@@ -183,7 +183,7 @@ Then, by hand:
 1. **Subscribe from a real calendar.** Open `/subscribe` while signed in, copy the
    `webcal://` address into Google Calendar or Outlook, and confirm the events
    arrive. Then cancel one event in the admin area and confirm the calendar
-   removes it — that is the whole point of the project, and it is the one thing no
+   removes it that is the whole point of the project, and it is the one thing no
    script here can check for you.
 2. **Trigger the reminder job** and read the response: `{"ok":true,...,"t7":n,"t1":n,"skipped":n}`.
 3. **Check the health endpoint** returns 200 with `"database":"up"`.
@@ -209,7 +209,7 @@ Then, by hand:
 
 ## 7. Before this is public
 
-- [ ] Seeded demo accounts **removed or disabled** — `admin@acadex.lasu.edu.ng`,
+- [ ] Seeded demo accounts **removed or disabled** `admin@acadex.lasu.edu.ng`,
       `staff@acadex.lasu.edu.ng`, `student@acadex.lasu.edu.ng` all use
       `Password123!`, which is published in this repository.
 - [ ] A fresh `AUTH_SECRET`, different from every value that has appeared in a
@@ -217,7 +217,7 @@ Then, by hand:
 - [ ] A `CRON_SECRET` set, and the schedule actually running.
 - [ ] `NODE_ENV=production` on the host, so HSTS, secure cookies and the hidden
       demo panel all take effect.
-- [ ] The published LASU dates replaced with the Senate-approved calendar — the
+- [ ] The published LASU dates replaced with the Senate-approved calendar the
       current 2026/2027 seed dates are marked `PROVISIONAL` in `prisma/seed.ts`
       because no authoritative source could be established.
 - [ ] A backup taken, and one restore rehearsed.

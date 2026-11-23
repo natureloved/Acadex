@@ -9,11 +9,11 @@
  * see what the job would do.
  *
  * Exit status is 0 when the run completed and non-zero when it failed, because a
- * scheduler that cannot tell success from failure is worse than no scheduler —
+ * scheduler that cannot tell success from failure is worse than no scheduler
  * and that is exactly the failure that a stale calendar would be blamed for.
  *
  * Optional: `--now=YYYY-MM-DD` runs the job as if that were today (UTC). It exists
- * to demonstrate and rehearse the job — the seeded calendar has nothing due on
+ * to demonstrate and rehearse the job the seeded calendar has nothing due on
  * most days, so without it "the reminders went out" is hard to show. Nothing else
  * changes: the same events, the same audience, the same dedupe rule.
  */

@@ -9,7 +9,7 @@
  * so it holds even if these wrappers are reached from somewhere unexpected.
  *
  * Neither action redirects. Both are submitted from the notification page itself,
- * and the current URL *is* the state worth preserving — a reader who filtered to
+ * and the current URL *is* the state worth preserving a reader who filtered to
  * `?unread=1` and marked one notice read should stay on that filtered list. A
  * redirect would need a hidden return path on every form; `revalidatePath` gives
  * the same result with less to get wrong, and works with JavaScript disabled

@@ -2,7 +2,7 @@
  * Server-side authorisation helpers (the "data access layer").
  *
  * Every protected page, server action and route handler calls into this module.
- * The role checks live here — next to the data — and not in the UI, so hiding a
+ * The role checks live here next to the data and not in the UI, so hiding a
  * link is never the only thing standing between a student and an admin action.
  */
 import "server-only";
@@ -64,7 +64,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   });
 
   // A token that no longer maps to a live account is treated as no session at
-  // all — this is how deactivation and deletion revoke access.
+  // all this is how deactivation and deletion revoke access.
   if (!user || !user.isActive || !isRole(user.role)) return null;
 
   return {

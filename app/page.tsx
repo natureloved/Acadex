@@ -16,7 +16,7 @@ export default async function HomePage() {
 
   // The front page shows the session the university is actually running.
   // When admin creates next year's session and makes it active, the label
-  // on the front page changes with it — no code change, no redeploy.
+  // on the front page changes with it no code change, no redeploy.
   // If the database is not reachable yet, fall back to the session label
   // computed from today's date (sessions start in September).
   let sessionLabel = currentSessionLabel();

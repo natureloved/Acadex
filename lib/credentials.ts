@@ -3,7 +3,7 @@
  *
  * Kept separate from `lib/auth.ts` because it needs no request context (no
  * `next/headers`), which makes the login check directly testable from a plain
- * Node script — see the verification section of README.md.
+ * Node script see the verification section of README.md.
  */
 import "server-only";
 
@@ -21,8 +21,8 @@ export type AuthenticatedUser = {
 /**
  * Check an email/password pair against the database.
  *
- * Returns `null` for every failure mode — unknown email, inactive account,
- * wrong password, corrupted hash — so callers cannot distinguish "no such user"
+ * Returns `null` for every failure mode unknown email, inactive account,
+ * wrong password, corrupted hash so callers cannot distinguish "no such user"
  * from "bad password" and enumerate accounts.
  */
 export async function authenticate(

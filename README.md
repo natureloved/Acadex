@@ -1,4 +1,4 @@
-# Acadex — Academic Calendar Management System
+# Acadex Academic Calendar Management System
 
 **Acadex** is a web application that lets a university publish its academic
 calendar as a *living system* instead of a static document. The registry
@@ -12,7 +12,7 @@ Computing and Information Technology) around a real, observed problem at
 approved calendar is published as a static page, and corrections (such as the
 one-week extension of the 2025/2026 session) are re-announced in separate news
 posts and social-media threads. Readers must reconcile a stale page with a
-correction posted elsewhere. Acadex turns that failure mode into a feature —
+correction posted elsewhere. Acadex turns that failure mode into a feature
 rescheduled events show exactly what changed and when.
 
 ## Built by
@@ -24,20 +24,20 @@ State University. Supervisor: **Dr. Aiyeniko Olukayode**.
 
 ## What it does
 
-- **Public calendar** — server-rendered agenda of published events, upcoming
+- **Public calendar** server-rendered agenda of published events, upcoming
   events first, with session / semester / category / period filters and search.
   Draft events are never visible publicly.
-- **Change history** — every event keeps an append-only revision trail; moved
+- **Change history** every event keeps an append-only revision trail; moved
   dates are flagged with a "rescheduled" badge and a before/after diff.
-- **Roles** — admin, staff and student accounts with server-enforced
+- **Roles** admin, staff and student accounts with server-enforced
   authorisation (JWT session cookie, role re-checked against the database on
   every request).
-- **Audience targeting** — events can target the whole university, a faculty,
+- **Audience targeting** events can target the whole university, a faculty,
   a department or a single level; staff-only notices stay off the public page.
-- **Notifications and reminders** — a notification centre for every signed-in
+- **Notifications and reminders** a notification centre for every signed-in
   user (unread state, links to the event) and a scheduled job that reminds an
   event's audience one week and one day before it starts.
-- **Demo data with an honest provenance** — the seed ships a realistic
+- **Demo data with an honest provenance** the seed ships a realistic
   2025/2026 LASU calendar (archive) and a current 2026/2027 session, whose
   dates are explicitly marked provisional because public sources conflict
   (see [docs/seed-data-sources.md](docs/seed-data-sources.md)).
@@ -49,7 +49,7 @@ State University. Supervisor: **Dr. Aiyeniko Olukayode**.
 | Framework | Next.js 16 (App Router) + React Server Components | One deployable, server-rendered app; shareable URLs; public pages work without client JavaScript |
 | Language | TypeScript | Typed end-to-end from the Prisma schema to the UI |
 | Styling | Tailwind CSS 4 | Fast utility styling, mobile-first responsive pages |
-| ORM | Prisma 7 with the `better-sqlite3` driver adapter | Typed schema + versioned migrations, with **zero external database** — SQLite is a single file, so the demo runs fully offline |
+| ORM | Prisma 7 with the `better-sqlite3` driver adapter | Typed schema + versioned migrations, with **zero external database** SQLite is a single file, so the demo runs fully offline |
 | Database | SQLite (`dev.db`) for local dev | No server to install or run; the design plans PostgreSQL for a real deployment |
 | Auth | `jose` JWT session cookie + `bcryptjs` | Signed, httpOnly session cookie; hashed passwords |
 | Validation | Service-layer checks (`lib/auth.ts` `server-only` boundaries) | Role checks live next to the data, not just in the UI |
@@ -72,7 +72,7 @@ npm install
 cp .env.example .env
 #    then edit .env and set AUTH_SECRET to a long random string, e.g.:
 #    node -e "console.log(crypto.randomBytes(32).toString('base64url'))"
-#    and CRON_SECRET, which guards the reminder endpoint (same command) —
+# and CRON_SECRET, which guards the reminder endpoint (same command)
 #    see "Notifications and reminders" below
 
 # 3. Create the database, apply migrations and seed the demo data
@@ -85,7 +85,7 @@ npm run dev
 # open http://localhost:3000
 ```
 
-The database is a single SQLite file (`dev.db`) created by the migrations —
+The database is a single SQLite file (`dev.db`) created by the migrations
 no database server, no Docker.
 
 ## Seeded demo accounts
@@ -104,7 +104,7 @@ All three accounts share the password **`Password123!`**:
 > dates were transcribed from published LASU announcements, and the 2026/2027
 > dates are **provisional placeholders** because published sources on that
 > session contradict each other. Verify everything against the official
-> Senate-approved calendar — see [docs/seed-data-sources.md](docs/seed-data-sources.md).
+> Senate-approved calendar see [docs/seed-data-sources.md](docs/seed-data-sources.md).
 
 ## Project structure
 
@@ -132,7 +132,7 @@ lib/                      Data access and domain logic
                           No framework imports, so the verify scripts exercise
                           them directly
   actions/                Server actions: resolve the user, then call a service
-  events.ts               Event queries — the single "who may see what" rule
+  events.ts Event queries the single "who may see what" rule
   constants.ts            String "enums" (SQLite has no native enums)
   session.ts              JWT session issuing/verification
   generated/prisma/       Generated Prisma client (recreated by `npm install`)
@@ -269,7 +269,7 @@ Acadex, without them having to look:
   filter narrows it to what is outstanding. The header shows the unread count for
   signed-in users, and hides the badge at zero.
 - **The reminder job** writes a `REMINDER_T7` one week before a published event
-  starts and a `REMINDER_T1` the day before, to everyone in that event's audience —
+  starts and a `REMINDER_T1` the day before, to everyone in that event's audience
   the same audience rule as the calendar, the staff view and the feeds, so a
   department-scoped event reminds that department only and a staff-only notice
   never reaches a student.
@@ -280,7 +280,7 @@ scoped to the signed-in user id in the service layer, so one account cannot see 
 mark another account's notices.
 
 The job is idempotent: a reminder is written at most once per person, event and
-horizon, so running it twice — or a scheduler firing twice by accident — creates
+horizon, so running it twice or a scheduler firing twice by accident creates
 nothing the second time and reports the duplicates as `skipped`. Each run also
 writes one `AuditLog` row (`REMINDERS_RUN`) with its counts, so a scheduler that
 silently stops firing is visible in the audit log rather than inferred from a stale
@@ -295,7 +295,7 @@ already covers "tell me without me visiting the site".
 
 Two equivalent entry points.
 
-**Without HTTP** — a thin runner that calls the service directly, prints the
+**Without HTTP** a thin runner that calls the service directly, prints the
 summary and exits non-zero on failure:
 
 ```bash
@@ -310,18 +310,18 @@ Add `-- --now=YYYY-MM-DD` to run the job as if that were today (UTC). It exists 
 demonstrate and rehearse the job, because the seeded calendar has nothing due on
 most days.
 
-**Over HTTP** — `POST /api/reminders/run` (and `GET`, for manual testing) returns
+**Over HTTP** `POST /api/reminders/run` (and `GET`, for manual testing) returns
 the summary as JSON. Both are guarded by a shared secret in `CRON_SECRET`:
 
 | Situation | Response |
 | --- | --- |
-| `CRON_SECRET` not set on the server | `503` — the job does not run at all |
-| Secret missing or wrong | `401` — the job does not run at all |
+| `CRON_SECRET` not set on the server | `503` the job does not run at all |
+| Secret missing or wrong | `401` the job does not run at all |
 | Secret correct | `200` with `{ ok, runAt, t7, t1, skipped, considered, auditLogId }` |
 
 It fails closed: a missing configuration can never turn into an open endpoint that
 anyone can trigger. The secret is compared with `timingSafeEqual`, and is read from
-`Authorization: Bearer <secret>` (what Vercel Cron sends) or `x-cron-secret` —
+`Authorization: Bearer <secret>` (what Vercel Cron sends) or `x-cron-secret`
 never from the query string, because URLs end up in access logs.
 
 Set the variable in `.env` (see `.env.example`) and generate a value with:
@@ -350,7 +350,7 @@ schtasks /create /tn "Acadex reminders" /sc daily /st 06:00 /tr ^
 0 6 * * * cd /srv/acadex && /usr/bin/npm run reminders >> /var/log/acadex-reminders.log 2>&1
 ```
 
-**Vercel Cron** — `vercel.json` in the project root, which sends the secret as a
+**Vercel Cron** `vercel.json` in the project root, which sends the secret as a
 bearer token automatically when `CRON_SECRET` is set in the project's environment
 variables:
 
@@ -402,7 +402,7 @@ server actions themselves (create, reject, delete).
 `verify-phase5.mts` drives the notification service directly (create, dedupe, list,
 count, mark one read, mark all read, and that one account can never touch another's
 notices), then the reminder job over temporary events created exactly seven days and
-one day out — asserting who was reminded, what the notices say, that a second run
+one day out asserting who was reminded, what the notices say, that a second run
 creates nothing, and that department-scoped and staff-only events reach exactly the
 right people. Finally it checks the HTTP surface: the redirect for anonymous
 visitors, the header's unread badge against the database, a mark-as-read POST

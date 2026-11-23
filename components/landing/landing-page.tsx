@@ -212,7 +212,7 @@ export function LandingPage({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* State: Calendar — opens on today, not on a hardcoded session month.
+  /* State: Calendar opens on today, not on a hardcoded session month.
    * The demo events cover Aug 2026–May 2027; months outside that range
    * simply show no demo events, and the visitor can navigate back to them. */
   const today = new Date();
@@ -390,8 +390,8 @@ export function LandingPage({
               </h1>
               <p className="hero-sub reveal-in">
                 Acadex is one authoritative academic calendar for Lagos State University. Its purpose is simple:
-                every student and staff member should always see the same, current dates — registration,
-                lectures, examinations, holidays and breaks — in one place, instead of reconciling a stale PDF
+                every student and staff member should always see the same, current dates registration,
+                lectures, examinations, holidays and breaks in one place, instead of reconciling a stale PDF
                 with a correction posted somewhere else. Registrars, deans and department admins draft, approve
                 and publish the term here, and when a date moves, the change itself is shown, not hidden.
               </p>
@@ -612,7 +612,7 @@ export function LandingPage({
           </div>
         </div>
 
-        {/* ============ PURPOSE — what Acadex is for ============ */}
+        {/* ============ PURPOSE what Acadex is for ============ */}
         <section className="section" id="purpose">
           <div className="container">
             <div className="sec-head">
@@ -622,7 +622,7 @@ export function LandingPage({
               </h2>
               <p>
                 At Lagos State University, the approved academic calendar was published as a static page, and
-                corrections — like the one-week extension of the 2025/2026 session — were re-announced in
+                corrections like the one-week extension of the 2025/2026 session were re-announced in
                 separate news posts and social-media threads. The original date stayed stale on the page while
                 the correction lived somewhere else, and students had to reconcile both. Acadex replaces that
                 document with a living system.
@@ -633,7 +633,7 @@ export function LandingPage({
                 <h3>One authoritative version</h3>
                 <p>
                   Registration, lectures, examinations, holidays, breaks, matriculation and convocation all
-                  live in one calendar. There is a single source of truth — no competing PDFs, no notice-board
+                  live in one calendar. There is a single source of truth no competing PDFs, no notice-board
                   photocopy that is already out of date.
                 </p>
               </div>
@@ -1011,7 +1011,7 @@ export function LandingPage({
                 },
                 {
                   q: "Who built Acadex?",
-                  a: "Two Computer Science diploma students — Aliu Rashidat Olayemi (24280591102) and Anikola Oluwatimileyin Oluwadamilare (24280591110) — of the Faculty of Computing and Information Technology, Lagos State University, supervised by Dr. Aiyeniko Olukayode.",
+                  a: "Two Computer Science diploma students Aliu Rashidat Olayemi (24280591102) and Anikola Oluwatimileyin Oluwadamilare (24280591110) of the Faculty of Computing and Information Technology, Lagos State University, supervised by Dr. Aiyeniko Olukayode.",
                 },
               ].map((faq, idx) => (
                 <div key={idx} className={`q-row ${openFaq === idx ? "open" : ""}`}>
@@ -1042,7 +1042,7 @@ export function LandingPage({
             <div className="eyebrow eyebrow-c reveal-in">Academic year {session} · Registration is open</div>
             <h2 className="reveal-in">Set the session in motion.</h2>
             <p className="reveal-in">
-              See the {session} calendar — registration, lectures, examinations and breaks — in one place,
+              See the {session} calendar registration, lectures, examinations and breaks in one place,
               with every change shown as it happens.
             </p>
 
@@ -1086,7 +1086,7 @@ export function LandingPage({
                 Acadex
               </a>
               <p>
-                One authoritative academic calendar for Lagos State University — built by Aliu Rashidat
+                One authoritative academic calendar for Lagos State University built by Aliu Rashidat
                 Olayemi and Anikola Oluwatimileyin Oluwadamilare, Computer Science diploma students,
                 supervised by {SUPERVISOR}.
               </p>

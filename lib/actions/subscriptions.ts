@@ -27,6 +27,6 @@ export async function rotateSubscriptionTokenAction(): Promise<void> {
 
   back(
     "saved",
-    "A new address was generated. The previous address stopped working immediately — resubscribe with the new one.",
+    "A new address was generated. The previous address stopped working immediately resubscribe with the new one.",
   );
 }

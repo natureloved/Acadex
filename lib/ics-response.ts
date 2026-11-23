@@ -2,8 +2,8 @@
  * HTTP response helper for the `.ics` routes.
  *
  * Kept apart from `lib/services/ics.ts` so that the builder stays framework-free
- * (and testable from `tsx`), while the wire details — content type, caching and
- * filename — are written once for all three feed routes.
+ * (and testable from `tsx`), while the wire details content type, caching and
+ * filename are written once for all three feed routes.
  */
 import { NextResponse } from "next/server";
 

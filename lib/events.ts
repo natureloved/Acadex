@@ -147,7 +147,7 @@ export type AudienceSubject = {
 /**
  * The audience half of every calendar query: whole-university notices, plus
  * anything targeted at the viewer's own faculty, department or level. This is the
- * query-side mirror of `canViewEvent` — the two must agree, or an event would be
+ * query-side mirror of `canViewEvent` the two must agree, or an event would be
  * readable on one path and hidden on another.
  */
 export function audienceScopeConditions(
@@ -189,7 +189,7 @@ export function visibilityFilter(
 /**
  * Narrow a signed-in user to the viewer shape every query takes.
  *
- * `null` in, `null` out — an anonymous visitor is a legitimate viewer with the
+ * `null` in, `null` out an anonymous visitor is a legitimate viewer with the
  * narrowest audience, not an error.
  */
 export function viewerFrom(
@@ -224,7 +224,7 @@ export type AgendaFilters = {
   viewer?: AgendaViewer;
 };
 
-/** Start of today in UTC — every calendar date is stored at UTC midnight. */
+/** Start of today in UTC every calendar date is stored at UTC midnight. */
 function utcDayStart(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
@@ -280,11 +280,11 @@ export async function getDepartmentOptions() {
  * free-text search over the title, description and location.
  *
  * `range` controls which slice of the timeline is returned:
- *   • "upcoming" (default) — events that have not finished yet, soonest first,
+ * • "upcoming" (default) events that have not finished yet, soonest first,
  *     so the landing view is never dominated by an archived session;
- *   • "past" — the archive, most recent first (how visitors reach the
+ * • "past" the archive, most recent first (how visitors reach the
  *     concluded 2025/2026 session);
- *   • "all" — the full chronological list.
+ * • "all" the full chronological list.
  *
  * Note: SQLite has no `mode: "insensitive"` option in Prisma. Its `LIKE`
  * operator is case-insensitive for ASCII, which is why plain `contains` is used
@@ -489,7 +489,7 @@ export type AdminStats = {
 
 export async function getAdminStats(now: Date = new Date()): Promise<AdminStats> {
   // Calendar dates live at UTC midnight, so the 30-day window is measured from
-  // the start of today in UTC — a request made at 23:59 still counts events
+  // the start of today in UTC a request made at 23:59 still counts events
   // that start or end "today".
   const dayStart = utcDayStart(now);
   const in30Days = new Date(dayStart.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -606,7 +606,7 @@ export const FEED_CANCELLED_WINDOW_DAYS = 90;
  * Everything a personal `.ics` feed should contain: the published events this
  * viewer may see, plus anything cancelled in the last 90 days.
  *
- * Cancelled entries are included on purpose — they are the only way a subscriber
+ * Cancelled entries are included on purpose they are the only way a subscriber
  * learns that a date was withdrawn. The client removes the event from its
  * calendar when it sees STATUS:CANCELLED with a higher SEQUENCE, which is exactly
  * the behaviour that makes subscribing better than checking the website.
@@ -627,7 +627,7 @@ export async function listFeedEvents(
       AND: [{ OR: audienceScopeConditions(viewer) }],
       OR: [
         { status: "PUBLISHED" },
-        // `updatedAt` — not `startAt` — because it is stamped when the event is
+        // `updatedAt` not `startAt` because it is stamped when the event is
         // cancelled, which is the event the subscriber needs to be told about.
         { status: "CANCELLED", updatedAt: { gte: cancelledSince } },
       ],

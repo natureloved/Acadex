@@ -11,7 +11,7 @@
  *  - rotating invalidates the previous URL immediately, which is the user's
  *    remedy if the address leaks;
  *  - a rotation is an auditable event, but the token value itself is never
- *    written to the audit log — logging a secret defeats the point of being
+ * written to the audit log logging a secret defeats the point of being
  *    able to rotate it.
  *
  * Framework-free (no `next/*`), so `scripts/verify-phase4.mts` can rotate a real
@@ -76,7 +76,7 @@ export function normaliseToken(raw: string): string {
  * The user's subscription, created on first visit to /subscribe.
  *
  * Seeded users already have a row, but accounts created before the feature
- * existed (or by the seed script of an earlier phase) do not — hence the create
+ * existed (or by the seed script of an earlier phase) do not hence the create
  * branch. Two concurrent requests can both miss the `findUnique`, so the unique
  * constraint on `userId` is treated as "someone else just created it" rather
  * than as an error.
@@ -158,7 +158,7 @@ export async function resolveFeedToken(
  * A user may only rotate their own feed: the token is a bearer credential for
  * that person's audience, so letting one account mint or revoke another's would
  * be a privilege-escalation hole. The rewrite and the audit row commit together
- * — a rotation that happened but was not recorded would be exactly the kind of
+ * a rotation that happened but was not recorded would be exactly the kind of
  * silent change the rest of Acadex works hard to avoid.
  */
 export async function rotateSubscriptionToken(

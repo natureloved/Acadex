@@ -1,6 +1,6 @@
 // Prisma CLI configuration (Prisma 7).
 // Prisma 7 no longer reads the datasource URL from schema.prisma, and it does
-// not load .env automatically — hence the explicit `dotenv/config` import.
+// not load .env automatically hence the explicit `dotenv/config` import.
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 

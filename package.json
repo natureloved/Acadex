@@ -2,7 +2,7 @@
   "name": "acadex",
   "version": "0.1.0",
   "private": true,
-  "description": "Acadex — Academic Calendar Management System (final-year project). Manages, publishes and tracks changes to a university academic calendar.",
+  "description": "Acadex Academic Calendar Management System (final-year project). Manages, publishes and tracks changes to a university academic calendar.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

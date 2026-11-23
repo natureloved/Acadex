@@ -62,14 +62,14 @@ _Last reviewed: 15 September 2026, against commit `304299b` + the Phase 6 work._
 | Enum-like fields validated against `lib/constants.ts`, never trusted | `lib/services/*` |
 | Length caps: title 200, description 5000, category name 60, CSV import 500 rows, audience entries 60 | `lib/services/events.ts`, `shared.ts`, `imports.ts` |
 | Server-action request bodies capped at 512 KB by the framework | `next.config.ts` |
-| The CSV import previews, then re-parses the raw text on confirm — the browser never hands back rows to be trusted | `lib/services/imports.ts` |
+| The CSV import previews, then re-parses the raw text on confirm the browser never hands back rows to be trusted | `lib/services/imports.ts` |
 | Prisma parameterises every query; no SQL is built by concatenation anywhere | throughout |
 
 ### Transport and browser
 
 | Control | Value | Notes |
 | --- | --- | --- |
-| `Content-Security-Policy` | `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`, `connect-src 'self'` | `script-src`/`style-src` allow `'unsafe-inline'` — see accepted risks |
+| `Content-Security-Policy` | `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`, `connect-src 'self'` | `script-src`/`style-src` allow `'unsafe-inline'` see accepted risks |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains` | Production only; sending it over plain-HTTP localhost would pin other local projects to HTTPS |
 | `X-Content-Type-Options` | `nosniff` | |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | |
@@ -94,7 +94,7 @@ _Last reviewed: 15 September 2026, against commit `304299b` + the Phase 6 work._
 | The reminder job's endpoint fails closed: 503 when `CRON_SECRET` is unset, 401 otherwise, timing-safe comparison | `app/api/reminders/run/route.ts` |
 | The diagnostics endpoint returns 404 in production and to non-administrators | `app/api/diagnostics/route.ts` |
 | Unknown feed tokens return 404 with no confirmation that a token exists | `app/ics/[token]/route.ts` |
-| Errors render a digest only — no message, no stack, no file paths | `app/error.tsx` |
+| Errors render a digest only no message, no stack, no file paths | `app/error.tsx` |
 
 ## Accepted risks and deliberate limits
 
@@ -102,7 +102,7 @@ _Last reviewed: 15 September 2026, against commit `304299b` + the Phase 6 work._
 | --- | --- | --- |
 | `script-src 'unsafe-inline'` | Next.js streams the App Router payload as inline scripts; without it the page is an empty shell. The codebase has no `dangerouslySetInnerHTML` and builds no HTML by concatenation, so there is no injection point | A nonce-based policy via `proxy.ts` on every document route (documented in `next.config.ts`) |
 | `style-src 'unsafe-inline'` | Tailwind ships one stylesheet and `CategoryChip` sets a per-category colour through a `style` attribute | Move category colours to CSS custom properties |
-| The subscription URL is a bearer credential | Calendar clients cannot log in; this is the same model Google and Outlook use for "secret addresses" | Short-lived, revocable tokens per device — the rotate button is the first step |
+| The subscription URL is a bearer credential | Calendar clients cannot log in; this is the same model Google and Outlook use for "secret addresses" | Short-lived, revocable tokens per device the rotate button is the first step |
 | Throttling is per-identifier, not per-address | `x-forwarded-for` is attacker-controlled without a trusted proxy in front | Add a per-address limit at the edge, where the address is trustworthy |
 | A distributed attack across many addresses | Out of scope for a single-instance project | Shared counters (Redis) plus edge rate limiting |
 | No email verification on registration | University accounts are issued and reconciled out of band | Verification flow, which needs a mail dependency |
@@ -113,7 +113,7 @@ _Last reviewed: 15 September 2026, against commit `304299b` + the Phase 6 work._
 
 1. **TLS termination and a real hostname.** HSTS is written but only takes effect over HTTPS.
 2. **Secrets from a secret manager**, not a `.env` file, and a rotated `AUTH_SECRET`.
-3. **PostgreSQL** instead of SQLite — `prisma/schema.prisma` documents the change — plus scheduled backups and tested restores.
+3. **PostgreSQL** instead of SQLite `prisma/schema.prisma` documents the change plus scheduled backups and tested restores.
 4. **A scheduler** for the reminder job, and an alert if it stops firing (the `REMINDERS_RUN` audit row exists to make a silent scheduler visible).
 5. **Monitoring and log retention.** `AuditLog` and `LoginAttempt` both grow forever today; both need a retention policy.
 6. **The demo accounts removed.** `prisma/seed.ts` creates `admin@acadex.lasu.edu.ng` with a published password and the sign-in page advertises it. That is deliberate for marking and must not ship.

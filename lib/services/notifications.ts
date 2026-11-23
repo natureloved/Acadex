@@ -1,5 +1,5 @@
 /**
- * Notification service — the "push" half of "nobody should miss a date".
+ * Notification service the "push" half of "nobody should miss a date".
  *
  * Two jobs live here:
  *
@@ -16,7 +16,7 @@
  *    whatever id is passed in.
  *  - **Reminders are idempotent.** `createNotification` refuses to write a second
  *    notice of the same type for the same event for the same user, so a job that
- *    runs twice — or that overlaps with a previous run — cannot spam anybody.
+ * runs twice or that overlaps with a previous run cannot spam anybody.
  *  - **The audience is the event's audience.** Recipients come from
  *    `resolveAudienceUserIds`, the same rule the calendar, the staff view and the
  *    feeds use, so a faculty-scoped event reminds only that faculty and a
@@ -52,7 +52,7 @@ export type CreateNotificationInput = {
 /**
  * The outcome of `createNotification`.
  *
- * `created: false` is not an error — it is the whole point of the idempotency
+ * `created: false` is not an error it is the whole point of the idempotency
  * rule, and the reminder job reports those as "skipped".
  */
 export type CreateNotificationOutcome = {
@@ -168,7 +168,7 @@ export async function listNotifications(
   });
 }
 
-/** How many notices this user has not read yet — the number in the header. */
+/** How many notices this user has not read yet the number in the header. */
 export async function unreadCount(userId: string): Promise<number> {
   return prisma.notification.count({ where: { userId, readAt: null } });
 }
@@ -251,7 +251,7 @@ function addUtcDays(day: Date, days: number): Date {
  * `daysBetween` in lib/format.ts measures *elapsed time* (`floor` of the
  * millisecond difference), which would call an event seven calendar days away
  * "in 6 days" whenever the job runs after midday. A reminder is about a calendar
- * day, so the day number is what gets compared — and both operands are brought to
+ * day, so the day number is what gets compared and both operands are brought to
  * UTC midnight before subtracting.
  */
 function calendarDaysUntil(from: Date, to: Date): number {
@@ -278,8 +278,8 @@ export type ReminderRunSummary = {
  *
  * Every PUBLISHED event starting exactly 7 calendar days from today produces a
  * `REMINDER_T7` for each user in its audience; exactly 1 day produces a
- * `REMINDER_T1`. Events that have already started — or that are drafts or
- * cancelled — are never considered.
+ * `REMINDER_T1`. Events that have already started or that are drafts or
+ * cancelled are never considered.
  *
  * The run always writes one `AuditLog` row, even when it did nothing: a scheduler
  * that silently stops firing is exactly the failure that log makes visible.
@@ -291,7 +291,7 @@ export type ReminderRunSummary = {
  * phase: they would add a mail or SMS dependency plus provider credentials to a
  * system that has to run offline for marking, and they need template, bounce and
  * unsubscribe handling that is a project in itself. The iCalendar feed already
- * covers the "tell me without me visiting the site" case — a subscriber's
+ * covers the "tell me without me visiting the site" case a subscriber's
  * calendar client polls it hourly and picks up a moved date on its own.
  */
 export async function generateDueReminders(
@@ -368,8 +368,8 @@ export async function generateDueReminders(
     }
   }
 
-  // One row per run, whatever the outcome. `entityId` is left null on purpose —
-  // a run is not about one record — and the counts go into the metadata so the
+  // One row per run, whatever the outcome. `entityId` is left null on purpose
+  // a run is not about one record and the counts go into the metadata so the
   // audit log answers "did the reminders go out, and for which days?" on its own.
   const audit = await writeAudit(prisma, {
     actorId: null,
@@ -399,7 +399,7 @@ export async function generateDueReminders(
 /**
  * The wording of a reminder.
  *
- * It names the event, states its dates and says how soon it is — the three things
+ * It names the event, states its dates and says how soon it is the three things
  * a reader needs from a notice without opening anything. The relative phrase is
  * computed from the *start of today* rather than from the instant the job ran, so
  * a seven-day reminder always reads "in 7 days" instead of "in 6 days" when the
@@ -418,12 +418,12 @@ function reminderCopy(
   if (daysAway === 7) {
     return {
       title: `Reminder: ${event.title} is one week away`,
-      body: `${event.title} ${singleDay ? "is on" : "runs"} ${range}${place} — ${soon}. This is the week to check the details and confirm nothing has moved.`,
+      body: `${event.title} ${singleDay ? "is on" : "runs"} ${range}${place} ${soon}. This is the week to check the details and confirm nothing has moved.`,
     };
   }
 
   return {
     title: `Tomorrow: ${event.title}`,
-    body: `${event.title} ${singleDay ? "is on" : "starts on"} ${range}${place} — ${soon}. Check the venue and the time today so you are not caught out.`,
+    body: `${event.title} ${singleDay ? "is on" : "starts on"} ${range}${place} ${soon}. Check the venue and the time today so you are not caught out.`,
   };
 }

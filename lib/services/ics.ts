@@ -8,7 +8,7 @@
  *
  * Why hand-rolled rather than a library: the deliverable explicitly forbids new
  * dependencies, and the subset Acadex needs (all-day dates, floating wall-clock
- * times, TEXT escaping, folding) is about 150 lines — smaller than the config a
+ * times, TEXT escaping, folding) is about 150 lines smaller than the config a
  * dependency would need, and examinable.
  *
  * Time model, which is the part most likely to be got wrong:
@@ -40,7 +40,7 @@ const DEFAULT_CALENDAR_DESCRIPTION =
  * The event fields the writer needs.
  *
  * Structurally compatible with `EventCard` from lib/events.ts, so feed routes can
- * pass database rows straight in — but declared here so the module stays free of
+ * pass database rows straight in but declared here so the module stays free of
  * any import that would drag in Prisma.
  */
 export type IcsEvent = {
@@ -68,9 +68,9 @@ export type IcsEvent = {
 };
 
 export type IcsOptions = {
-  /** `X-WR-CALNAME` — what the subscriber sees in their calendar list. */
+  /** `X-WR-CALNAME` what the subscriber sees in their calendar list. */
   calendarName?: string;
-  /** `X-WR-CALDESC` — the description shown next to the subscription. */
+  /** `X-WR-CALDESC` the description shown next to the subscription. */
   calendarDescription?: string;
   /**
    * Injectable clock. `DTSTAMP` must be "now" in production, but pinning it
@@ -104,7 +104,7 @@ export function escapeText(value: string): string {
  *
  * Continuation lines begin with a single space, which the parser strips when it
  * joins them back together. The fold walks *code points* (`for…of`) and measures
- * each one in UTF-8, so a multi-byte character is never split across a fold —
+ * each one in UTF-8, so a multi-byte character is never split across a fold
  * splitting it would put a replacement character (U+FFFD) in the subscriber's
  * calendar where "Ẹ̀kọ́" or "✓" used to be.
  *
@@ -152,7 +152,7 @@ export function toIcsDate(date: Date): string {
 }
 
 /**
- * `YYYYMMDDTHHMMSS` — floating local time (no trailing `Z`, no `TZID`).
+ * `YYYYMMDDTHHMMSS` floating local time (no trailing `Z`, no `TZID`).
  *
  * The UTC getters are used on purpose: the wall-clock time was *stored* in the
  * UTC fields, so reading it back with getUTCHours() returns exactly what the
@@ -165,7 +165,7 @@ export function toIcsDateTime(date: Date): string {
   );
 }
 
-/** `YYYYMMDDTHHMMSSZ` — a true instant, used for DTSTAMP and LAST-MODIFIED. */
+/** `YYYYMMDDTHHMMSSZ` a true instant, used for DTSTAMP and LAST-MODIFIED. */
 export function toIcsUtcStamp(date: Date): string {
   return `${toIcsDateTime(date)}Z`;
 }
@@ -341,9 +341,9 @@ export function buildEventCalendar(event: IcsEvent, options: IcsOptions = {}): s
 /**
  * "Add to Google Calendar" template URL.
  *
- * Google accepts the same two date shapes as the feed — `YYYYMMDD/YYYYMMDD` with
+ * Google accepts the same two date shapes as the feed `YYYYMMDD/YYYYMMDD` with
  * an exclusive end for all-day events, and floating `YYYYMMDDTHHMMSS` for timed
- * ones — so the button and the subscription agree on what the date means.
+ * ones so the button and the subscription agree on what the date means.
  */
 export function buildGoogleCalendarUrl(event: IcsEvent): string {
   const endAt =

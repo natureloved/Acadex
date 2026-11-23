@@ -3,7 +3,7 @@
  *
  * All calendar dates are stored at UTC midnight. Every formatter here pins
  * `timeZone: "UTC"` so that a student in Lagos and a marker in London see the
- * same calendar day — formatting in local time would shift an "all-day" event
+ * same calendar day formatting in local time would shift an "all-day" event
  * to the previous or next day.
  */
 
@@ -68,7 +68,7 @@ export function daysBetween(from: Date, to: Date): number {
 }
 
 /**
- * "in 12 days" / "today" / "3 days ago" — used for the upcoming countdown.
+ * "in 12 days" / "today" / "3 days ago" used for the upcoming countdown.
  */
 export function formatRelativeDays(target: Date, now: Date = new Date()): string {
   const delta = daysBetween(now, target);
