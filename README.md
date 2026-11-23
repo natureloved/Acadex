@@ -6,13 +6,21 @@ creates sessions, semesters and events (registration, lectures, examinations,
 breaks, matriculation, convocation); students and staff read one authoritative,
 searchable calendar; and every change of date leaves a visible audit trail.
 
-It was built as a final-year project (Computer Science / Software Engineering)
-around a real, observed problem at **Lagos State University (LASU)**: the
+It was built as a final-year diploma project (Computer Science, Faculty of
+Computing and Information Technology) around a real, observed problem at
+**Lagos State University (LASU)**: the
 approved calendar is published as a static page, and corrections (such as the
 one-week extension of the 2025/2026 session) are re-announced in separate news
 posts and social-media threads. Readers must reconcile a stale page with a
 correction posted elsewhere. Acadex turns that failure mode into a feature —
 rescheduled events show exactly what changed and when.
+
+## Built by
+
+Acadex was created by two Computer Science diploma students, **Aliu Rashidat
+Olayemi (24280591102)** and **Anikola Oluwatimileyin Oluwadamilare
+(24280591110)**, of the Faculty of Computing and Information Technology, Lagos
+State University. Supervisor: **Dr. Aiyeniko Olukayode**.
 
 ## What it does
 
@@ -87,7 +95,7 @@ All three accounts share the password **`Password123!`**:
 | Role | Email |
 | --- | --- |
 | Administrator | `admin@acadex.lasu.edu.ng` |
-| Staff (Faculty of Science, Computer Science) | `staff@acadex.lasu.edu.ng` |
+| Staff (Faculty of Computing and Information Technology, Computer Science) | `staff@acadex.lasu.edu.ng` |
 | Student (CSC, 400 level) | `student@acadex.lasu.edu.ng` |
 
 > **⚠️ These are demo-only credentials, seeded in plain sight for the

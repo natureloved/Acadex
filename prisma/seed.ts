@@ -73,10 +73,22 @@ const FACULTIES: {
   departments: { name: string; code: string }[];
 }[] = [
   {
+    // Home faculty of the project authors (Computer Science diploma
+    // students). Computer Science sits here, not under Faculty of Science.
+    name: "Faculty of Computing and Information Technology",
+    code: "FCIT",
+    departments: [
+      { name: "Computer Science", code: "CSC" },
+      { name: "Data Science", code: "DSC" },
+      { name: "Cybersecurity", code: "CYB" },
+      { name: "Information and Communication Technology", code: "ICT" },
+      { name: "Software Engineering", code: "SWE" },
+    ],
+  },
+  {
     name: "Faculty of Science",
     code: "SCI",
     departments: [
-      { name: "Computer Science", code: "CSC" },
       { name: "Mathematics", code: "MTH" },
       { name: "Physics", code: "PHY" },
       { name: "Chemistry", code: "CHM" },
@@ -764,7 +776,7 @@ async function main() {
       email: "staff@acadex.lasu.edu.ng",
       passwordHash,
       role: "STAFF",
-      facultyId: facultyIdByCode.get("SCI")!,
+      facultyId: facultyIdByCode.get("FCIT")!,
       departmentId: departmentIdByCode.get("CSC")!,
     },
   });
@@ -775,7 +787,7 @@ async function main() {
       email: "student@acadex.lasu.edu.ng",
       passwordHash,
       role: "STUDENT",
-      facultyId: facultyIdByCode.get("SCI")!,
+      facultyId: facultyIdByCode.get("FCIT")!,
       departmentId: departmentIdByCode.get("CSC")!,
       level: 400,
     },

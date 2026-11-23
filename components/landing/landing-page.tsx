@@ -3,9 +3,12 @@
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  currentSessionLabel,
+  semesterForYearMonth,
+} from "@/lib/academic-session";
+import {
   ArrowDown,
   ArrowRight,
-  ArrowUpRight,
   Bell,
   Calendar,
   Check,
@@ -107,6 +110,22 @@ const EVENTS: Record<string, CalendarEvent[]> = {
   ],
 };
 
+/* The home faculty of the project, and the courses (departments) under it. */
+const FACULTY_NAME = "Faculty of Computing and Information Technology";
+const FACULTY_COURSES = [
+  "Computer Science",
+  "Data Science",
+  "Cybersecurity",
+  "Information and Communication Technology",
+  "Software Engineering",
+];
+
+const AUTHORS = [
+  { name: "Aliu Rashidat Olayemi", matric: "24280591102" },
+  { name: "Anikola Oluwatimileyin Oluwadamilare", matric: "24280591110" },
+];
+const SUPERVISOR = "Dr. Aiyeniko Olukayode";
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 function generateAndDownloadICS(
@@ -158,7 +177,16 @@ export interface LandingPageUser {
   role: string;
 }
 
-export function LandingPage({ user }: { user?: LandingPageUser | null }) {
+export function LandingPage({
+  user,
+  sessionLabel,
+}: {
+  user?: LandingPageUser | null;
+  /** Active session from the database (app/page.tsx); falls back to the
+   *  session computed from today's date, so the year rolls every session. */
+  sessionLabel?: string;
+}) {
+  const session = sessionLabel ?? currentSessionLabel();
   /* State: Toast */
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -184,9 +212,16 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* State: Calendar */
-  const [viewDate, setViewDate] = useState({ y: 2026, m: 8 }); // September 2026
-  const [selectedDay, setSelectedDay] = useState({ y: 2026, m: 8, d: 17 });
+  /* State: Calendar — opens on today, not on a hardcoded session month.
+   * The demo events cover Aug 2026–May 2027; months outside that range
+   * simply show no demo events, and the visitor can navigate back to them. */
+  const today = new Date();
+  const [viewDate, setViewDate] = useState({ y: today.getFullYear(), m: today.getMonth() });
+  const [selectedDay, setSelectedDay] = useState({
+    y: today.getFullYear(),
+    m: today.getMonth(),
+    d: today.getDate(),
+  });
   const [animateEvents, setAnimateEvents] = useState(false);
 
   const calKey = `${viewDate.y}-${viewDate.m}`;
@@ -195,11 +230,7 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
     (e) => e.d === selectedDay.d
   );
 
-  const isPrevDisabled = viewDate.y === 2026 && viewDate.m === 7;
-  const isNextDisabled = viewDate.y === 2027 && viewDate.m === 4;
-
   const handlePrevMonth = () => {
-    if (isPrevDisabled) return;
     setViewDate((prev) => {
       const newM = prev.m - 1;
       return newM < 0 ? { y: prev.y - 1, m: 11 } : { y: prev.y, m: newM };
@@ -207,7 +238,6 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
   };
 
   const handleNextMonth = () => {
-    if (isNextDisabled) return;
     setViewDate((prev) => {
       const newM = prev.m + 1;
       return newM > 11 ? { y: prev.y + 1, m: 0 } : { y: prev.y, m: newM };
@@ -263,49 +293,8 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
     );
   };
 
-  /* State: Pricing Billing Toggle */
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-  const priceValues = {
-    monthly: { n: "89", note: "billed monthly · cancel anytime" },
-    annual: { n: "69", note: "billed annually ($828/yr) · save 22%" },
-  };
-
   /* State: FAQ Accordion */
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  /* State: CTA Form */
-  const [ctaEmail, setCtaEmail] = useState("");
-  const [ctaSubmitted, setCtaSubmitted] = useState(false);
-  const [ctaError, setCtaError] = useState(false);
-
-  const handleCtaSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ctaEmail.trim())) {
-      setCtaError(true);
-      return;
-    }
-    setCtaError(false);
-    setCtaSubmitted(true);
-    showToast(`Welcome aboard : confirmation sent to ${ctaEmail.trim()}`);
-  };
-
-  /* Animated Stats on Viewport Intersection */
-  const [statsVisible, setStatsVisible] = useState(false);
-  const statsRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setStatsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (statsRef.current) observer.observe(statsRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <div className="relative min-h-screen bg-[var(--paper)] text-[var(--ink)]">
@@ -325,7 +314,7 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
           <nav className="nav-links" aria-label="Primary">
             <a href="#product">Features</a>
             <a href="#how">How it works</a>
-            <a href="#pricing">Pricing</a>
+            <a href="#story">Our Story</a>
             <a href="#faq">FAQ</a>
           </nav>
           <div className="nav-right">
@@ -360,8 +349,8 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
           <a href="#how" onClick={() => setMobileMenuOpen(false)}>
             How it works
           </a>
-          <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>
-            Pricing
+          <a href="#story" onClick={() => setMobileMenuOpen(false)}>
+            Our Story
           </a>
           <a href="#faq" onClick={() => setMobileMenuOpen(false)}>
             FAQ
@@ -385,7 +374,7 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
             <div>
               <div className="hero-badge reveal-in">
                 <span className="hero-dot" />
-                Academic year 2026/2027 · Harmattan &amp; Rain Semesters
+                Academic year {session} · Harmattan &amp; Rain Semesters
               </div>
               <h1 className="hero-h reveal-in">
                 The academic year,
@@ -400,9 +389,11 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                 .
               </h1>
               <p className="hero-sub reveal-in">
-                Acadex gives registrars, deans, and department admins one place to draft, approve, and publish
-                the term : semesters, examinations, holidays, registration windows : so students and staff always
-                see the same, current dates. No PDF chains. No Monday-morning surprises.
+                Acadex is one authoritative academic calendar for Lagos State University. Its purpose is simple:
+                every student and staff member should always see the same, current dates — registration,
+                lectures, examinations, holidays and breaks — in one place, instead of reconciling a stale PDF
+                with a correction posted somewhere else. Registrars, deans and department admins draft, approve
+                and publish the term here, and when a date moves, the change itself is shown, not hidden.
               </p>
               <div className="hero-ctas reveal-in">
                 {user ? (
@@ -419,7 +410,7 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                 </a>
               </div>
               <p className="hero-proof reveal-in">
-                Free department pilot<b>·</b>No card required<b>·</b>Live in an afternoon
+                Final-year diploma project<b>·</b>Lagos State University<b>·</b>{session} session
               </p>
             </div>
 
@@ -433,9 +424,10 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                 <div className="sheet-head">
                   <div>
                     <div className="sh-term" id="calTerm">
-                      {viewDate.m >= 7 || (viewDate.y === 2026 && viewDate.m >= 8)
-                        ? "Harmattan Semester · 2026/2027"
-                        : "Rain Semester · 2026/2027"}
+                      {(() => {
+                        const term = semesterForYearMonth(viewDate.y, viewDate.m);
+                        return `${term.semester} · ${term.sessionLabel}`;
+                      })()}
                     </div>
                     <div className="sh-month" id="calMonth">
                       {MONTHS[viewDate.m]} <span className="sh-yr">{viewDate.y}</span>
@@ -449,7 +441,6 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                       <button
                         id="calPrev"
                         aria-label="Previous month"
-                        disabled={isPrevDisabled}
                         onClick={handlePrevMonth}
                       >
                         <ChevronLeft className="size-4" />
@@ -457,7 +448,6 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                       <button
                         id="calNext"
                         aria-label="Next month"
-                        disabled={isNextDisabled}
                         onClick={handleNextMonth}
                       >
                         <ChevronRight className="size-4" />
@@ -621,6 +611,51 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
             </div>
           </div>
         </div>
+
+        {/* ============ PURPOSE — what Acadex is for ============ */}
+        <section className="section" id="purpose">
+          <div className="container">
+            <div className="sec-head">
+              <div className="eyebrow">Why Acadex exists</div>
+              <h2>
+                The main purpose: <em className="accent">one calendar everyone can trust.</em>
+              </h2>
+              <p>
+                At Lagos State University, the approved academic calendar was published as a static page, and
+                corrections — like the one-week extension of the 2025/2026 session — were re-announced in
+                separate news posts and social-media threads. The original date stayed stale on the page while
+                the correction lived somewhere else, and students had to reconcile both. Acadex replaces that
+                document with a living system.
+              </p>
+            </div>
+            <div className="purpose-grid">
+              <div className="purpose-card">
+                <h3>One authoritative version</h3>
+                <p>
+                  Registration, lectures, examinations, holidays, breaks, matriculation and convocation all
+                  live in one calendar. There is a single source of truth — no competing PDFs, no notice-board
+                  photocopy that is already out of date.
+                </p>
+              </div>
+              <div className="purpose-card">
+                <h3>Changes are shown, not hidden</h3>
+                <p>
+                  When a date moves, Acadex records the change with a before-and-after history, flags the event
+                  as rescheduled, and notifies the people it affects. A moved date is an event in itself, not a
+                  quiet edit.
+                </p>
+              </div>
+              <div className="purpose-card">
+                <h3>Dates that reach students</h3>
+                <p>
+                  Students see the calendar filtered to their faculty, department and level, subscribe to it
+                  from Google, Outlook or Apple Calendar, download it, print it, and get reminded a week and a
+                  day before the dates that matter to them.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ============ FEATURES ============ */}
         <section className="section" id="product">
@@ -861,39 +896,47 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
           </div>
         </section>
 
-        {/* ============ STATS ============ */}
-        <section className="stats" ref={statsRef}>
-          <div className="container stats-inner">
-            <div className="stats-label reveal-in">One term in, registrars tell us:</div>
-            <div className="stats-row">
-              <div className="stat reveal-in">
-                <div className="stat-n">
-                  <span>{statsVisible ? "240" : "0"}</span>
-                  <span className="sfx">+</span>
+        {/* ============ OUR STORY ============ */}
+        <section className="section" id="story">
+          <div className="container">
+            <div className="sec-head">
+              <div className="eyebrow">Our Story</div>
+              <h2>
+                Built by students, <em className="accent">for students.</em>
+              </h2>
+              <p>
+                Acadex was created by two Computer Science diploma students who wanted to solve a simple
+                problem we experienced as students: keeping track of important academic dates and activities.
+                We developed Acadex as a centralized platform for managing and accessing academic calendar
+                information, combining our knowledge of web development, database management, and system
+                design to make academic planning easier and more organized.
+              </p>
+            </div>
+            <div className="story-grid">
+              {AUTHORS.map((author) => (
+                <div className="story-card" key={author.matric}>
+                  <div className="story-name">{author.name}</div>
+                  <div className="story-meta">Computer Science · Diploma</div>
+                  <div className="story-meta">Matric No: {author.matric}</div>
                 </div>
-                <div className="stat-l">Faculties &amp; academic departments</div>
+              ))}
+              <div className="story-card">
+                <div className="story-name">{SUPERVISOR}</div>
+                <div className="story-meta">Project Supervisor</div>
+                <div className="story-meta">Lagos State University</div>
               </div>
-              <div className="stat reveal-in">
-                <div className="stat-n">
-                  <span>{statsVisible ? "45" : "0"}</span>
-                  <span className="sfx">k+</span>
-                </div>
-                <div className="stat-l">Students kept in sync</div>
-              </div>
-              <div className="stat reveal-in">
-                <div className="stat-n">
-                  <span>{statsVisible ? "94" : "0"}</span>
-                  <span className="sfx">%</span>
-                </div>
-                <div className="stat-l">Fewer calendar conflict queries</div>
-              </div>
-              <div className="stat reveal-in">
-                <div className="stat-n">
-                  <span>{statsVisible ? "4.9" : "0"}</span>
-                  <span className="sfx">/5</span>
-                </div>
-                <div className="stat-l">Directorate satisfaction</div>
-              </div>
+            </div>
+            <div className="faculty-card">
+              <h3>{FACULTY_NAME}</h3>
+              <p>
+                Computer Science sits under the {FACULTY_NAME} at Lagos State University. The faculty
+                offers:
+              </p>
+              <ul className="course-list">
+                {FACULTY_COURSES.map((course) => (
+                  <li key={course}>{course}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
@@ -935,132 +978,6 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
           </div>
         </section>
 
-        {/* ============ QUOTE ============ */}
-        <section className="quote-sec">
-          <div className="container">
-            <div className="q-mark reveal-in" aria-hidden="true">“</div>
-            <blockquote className="q-text reveal-in">
-              We used to distribute a revised PDF every time a Senate date moved : and still answer endless questions about the old timetable.
-              With Acadex, the university calendar is always verified and live. Students stop asking <em className="accent">when</em> things
-              are, and academic planning finally operates ahead of deadlines.
-            </blockquote>
-            <div className="q-attr reveal-in">Dr. Olumide Adeleke · Director of Academic Planning, Lagos State University</div>
-            <div className="trusted reveal-in">
-              <span>Lagos State University</span>
-              <span>Faculty of Science</span>
-              <span>Faculty of Arts</span>
-              <span>Faculty of Social Sciences</span>
-              <span>Faculty of Engineering</span>
-              <span>Faculty of Law</span>
-              <span>Faculty of Management Sciences</span>
-              <span>College of Medicine (LASUCOM)</span>
-            </div>
-          </div>
-        </section>
-
-        {/* ============ PRICING ============ */}
-        <section className="section" id="pricing" style={{ paddingTop: "96px" }}>
-          <div className="container">
-            <div className="sec-head center">
-              <div className="eyebrow eyebrow-c">Pricing</div>
-              <h2>
-                A price your budget office will actually <em className="accent">approve.</em>
-              </h2>
-              <p>Start free with one department. Upgrade when the rest of the campus wants in : they will.</p>
-              <div className="bill-toggle" role="group" aria-label="Billing period">
-                <button
-                  className={`bill-btn ${billingCycle === "monthly" ? "on" : ""}`}
-                  type="button"
-                  onClick={() => setBillingCycle("monthly")}
-                >
-                  Monthly
-                </button>
-                <button
-                  className={`bill-btn ${billingCycle === "annual" ? "on" : ""}`}
-                  type="button"
-                  onClick={() => setBillingCycle("annual")}
-                >
-                  Annual<span className="save">save 22%</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="price-grid">
-              <div className="plan plan-light reveal-in">
-                <div className="plan-name">Pilot</div>
-                <div className="plan-for">For one department finding its feet.</div>
-                <div className="plan-price">
-                  <span className="pp-num" style={{ fontSize: "44px" }}>
-                    Free
-                  </span>
-                  <span className="pp-per">for one department</span>
-                </div>
-                <div className="plan-note">Free for as long as you like · no card</div>
-                <ul className="plan-feats">
-                  <li><Check className="size-4 text-[var(--green)] flex-none" />One department calendar</li>
-                  <li><Check className="size-4 text-[var(--green)] flex-none" />Up to 5 staff editors</li>
-                  <li><Check className="size-4 text-[var(--green)] flex-none" />Unlimited events &amp; categories</li>
-                  <li><Check className="size-4 text-[var(--green)] flex-none" />ICS export &amp; subscribe</li>
-                  <li><Check className="size-4 text-[var(--green)] flex-none" />Community support</li>
-                </ul>
-                {user ? (
-                  <Link className="btn btn-line" href="/calendar">
-                    Open Calendar
-                  </Link>
-                ) : (
-                  <Link className="btn btn-line" href="/login">
-                    Sign in
-                  </Link>
-                )}
-              </div>
-
-              <div className="plan plan-dark reveal-in">
-                <div className="plan-tag">Most departments start here</div>
-                <div className="plan-name">Campus</div>
-                <div className="plan-for">For registrars running the whole term.</div>
-                <div className="plan-price">
-                  <span className="pp-cur">$</span>
-                  <span className="pp-num" id="ppNum">
-                    {priceValues[billingCycle].n}
-                  </span>
-                  <span className="pp-per">/ month · per campus</span>
-                </div>
-                <div className="plan-note" id="ppNote">
-                  {priceValues[billingCycle].note}
-                </div>
-                <ul className="plan-feats">
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />Everything in Pilot</li>
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />Unlimited calendars &amp; departments</li>
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />Approval workflows &amp; version history</li>
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />LMS &amp; portal embeds</li>
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />Timed announcements &amp; digests</li>
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />Registrar-grade audit trail</li>
-                  <li><Check className="size-4 text-[var(--green-lite)] flex-none" />Priority support</li>
-                </ul>
-                {user ? (
-                  <Link className="btn btn-cream" href="/calendar">
-                    Open Calendar <ArrowRight className="size-4" />
-                  </Link>
-                ) : (
-                  <Link className="btn btn-cream" href="/login">
-                    Sign in <ArrowRight className="size-4" />
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            <div className="district reveal-in">
-              <p>
-                <strong>Running a multi-faculty or multi-campus university system?</strong> Calendar hierarchies, single sign-on, and a
-                dedicated success manager : priced per institution, not per headache.
-              </p>
-              <a href="#get-started">
-                Talk to us <ArrowUpRight className="size-4" />
-              </a>
-            </div>
-          </div>
-        </section>
-
         {/* ============ FAQ ============ */}
         <section className="section" id="faq" style={{ paddingTop: "40px" }}>
           <div className="container">
@@ -1074,7 +991,7 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
               {[
                 {
                   q: "How long does it take to move an existing calendar onto Acadex?",
-                  a: "Most departments import previous dates from an ICS file, a spreadsheet, or the approved Senate PDF : and are drafting within an afternoon. Campus plans include guided onboarding by our technical team.",
+                  a: "Most departments import previous dates from an ICS file, a spreadsheet, or the approved Senate PDF : and are drafting within an afternoon.",
                 },
                 {
                   q: "How do students and staff actually receive the calendar?",
@@ -1093,8 +1010,8 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                   a: "Yes : terms are built from nested periods, so any university structure fits, including sessional breaks and sandwich programmes. Multi-campus hierarchies with SSO are fully supported.",
                 },
                 {
-                  q: "What's actually in the free pilot?",
-                  a: "One department, up to five staff editors, unlimited events, and the live ICS subscription : free for as long as you like, no payment required. It's a real workspace, not a screenshot.",
+                  q: "Who built Acadex?",
+                  a: "Two Computer Science diploma students — Aliu Rashidat Olayemi (24280591102) and Anikola Oluwatimileyin Oluwadamilare (24280591110) — of the Faculty of Computing and Information Technology, Lagos State University, supervised by Dr. Aiyeniko Olukayode.",
                 },
               ].map((faq, idx) => (
                 <div key={idx} className={`q-row ${openFaq === idx ? "open" : ""}`}>
@@ -1122,57 +1039,34 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
         {/* ============ CTA ============ */}
         <section className="cta-band" id="get-started">
           <div className="container cta-inner">
-            <div className="eyebrow eyebrow-c reveal-in">Registration for 2026/2027 is open</div>
+            <div className="eyebrow eyebrow-c reveal-in">Academic year {session} · Registration is open</div>
             <h2 className="reveal-in">Set the session in motion.</h2>
             <p className="reveal-in">
-              Join the academic departments publishing calendars their whole campus actually trusts. Free pilot, live in an
-              afternoon.
+              See the {session} calendar — registration, lectures, examinations and breaks — in one place,
+              with every change shown as it happens.
             </p>
 
-            {user ? (
-              <div className="reveal-in flex flex-col items-center gap-4 text-center mt-6">
+            <div className="reveal-in flex flex-col items-center gap-4 text-center mt-6">
+              {user ? (
                 <p className="text-base font-medium text-[var(--paper-2)]">
                   Signed in as <strong className="text-[#FBF8F0] font-semibold">{user.name}</strong> ({user.role})
                 </p>
+              ) : null}
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link className="btn btn-cream" href="/calendar">
                   Open Calendar <ArrowRight className="size-4" />
                 </Link>
-              </div>
-            ) : ctaSubmitted ? (
-              <div className="cta-done">
-                <span className="cd-ic">
-                  <Check className="size-4" />
-                </span>
-                You&apos;re on the list : we&apos;ll write before registration week.
-              </div>
-            ) : (
-              <>
-                <form className={`cta-form reveal-in ${ctaError ? "err" : ""}`} onSubmit={handleCtaSubmit} noValidate>
-                  <input
-                    type="email"
-                    id="ctaEmail"
-                    placeholder="you@lasu.edu.ng"
-                    aria-label="Work or campus email"
-                    autoComplete="email"
-                    value={ctaEmail}
-                    onChange={(e) => {
-                      setCtaEmail(e.target.value);
-                      if (ctaError) setCtaError(false);
-                    }}
-                  />
-                  <button className="btn btn-cream" type="submit">
-                    Get early access <ArrowRight className="size-4" />
-                  </button>
-                </form>
-                {ctaError && (
-                  <p className="cta-msg" id="ctaMsg">
-                    That address looks off : try your institutional or campus email.
-                  </p>
+                {user ? null : (
+                  <Link className="btn btn-line" href="/login">
+                    Sign in
+                  </Link>
                 )}
-              </>
-            )}
+              </div>
+            </div>
 
-            <div className="cta-note reveal-in">Free pilot · No card required · Cancel anytime</div>
+            <div className="cta-note reveal-in">
+              Final-year diploma project · {FACULTY_NAME} · Lagos State University
+            </div>
           </div>
         </section>
       </main>
@@ -1191,14 +1085,18 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
                 </svg>
                 Acadex
               </a>
-              <p>The calendar system for registrars, deans, and the university administration.</p>
+              <p>
+                One authoritative academic calendar for Lagos State University — built by Aliu Rashidat
+                Olayemi and Anikola Oluwatimileyin Oluwadamilare, Computer Science diploma students,
+                supervised by {SUPERVISOR}.
+              </p>
               <div className="foot-loc">Lagos State University, Badagry Expressway, Ojo, Lagos, Nigeria : est. 1983</div>
             </div>
             <div className="foot-col">
               <h4>Product</h4>
               <a href="#product">Features</a>
               <a href="#how">How it works</a>
-              <a href="#pricing">Pricing</a>
+              <a href="#story">Our Story</a>
               <a href="#faq">FAQ</a>
             </div>
             <div className="foot-col">
@@ -1259,7 +1157,7 @@ export function LandingPage({ user }: { user?: LandingPageUser | null }) {
             </div>
           </div>
           <div className="foot-bottom">
-            <span>© 2026 Acadex · Lagos State University Academic Calendar System</span>
+            <span>© {new Date().getFullYear()} Acadex · Lagos State University Academic Calendar System</span>
             <span>
               <button
                 type="button"

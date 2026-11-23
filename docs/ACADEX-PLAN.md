@@ -1,7 +1,9 @@
 # Acadex — Academic Calendar Management System
 
-**Type:** Final Year Project (Computer Science / Software Engineering)
+**Type:** Final Year Diploma Project (Computer Science, Faculty of Computing and Information Technology)
 **Institution context:** Lagos State University (LASU)
+**Authors:** Aliu Rashidat Olayemi (24280591102), Anikola Oluwatimileyin Oluwadamilare (24280591110)
+**Supervisor:** Dr. Aiyeniko Olukayode
 **Workspace:** `C:\Users\RastaDev\Desktop\Acadex`
 **Status:** Planning (awaiting stack + scope confirmation)
 

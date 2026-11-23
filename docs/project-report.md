@@ -1,7 +1,7 @@
 # DESIGN AND IMPLEMENTATION OF AN ACADEMIC CALENDAR MANAGEMENT SYSTEM (ACADEX)
 
 **A Case Study of Lagos State University (LASU)**  
-**Department of Computer Science, Faculty of Science**
+**Department of Computer Science, Faculty of Computing and Information Technology**
 
 ---
 
