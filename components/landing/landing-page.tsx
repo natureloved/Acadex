@@ -122,7 +122,7 @@ const FACULTY_COURSES = [
 
 const AUTHORS = [
   { name: "Aliu Rashidat Olayemi", matric: "24280591102" },
-  { name: "Anikola Oluwatimileyin Oluwadamilare", matric: "24280591110" },
+  { name: "Akinola Oluwatimileyin Oluwadamilare", matric: "24280591110" },
 ];
 const SUPERVISOR = "Dr. Aiyeniko Olukayode";
 
@@ -991,11 +991,11 @@ export function LandingPage({
               {[
                 {
                   q: "How long does it take to move an existing calendar onto Acadex?",
-                  a: "Most departments import previous dates from an ICS file, a spreadsheet, or the approved Senate PDF : and are drafting within an afternoon.",
+                  a: "Most departments import previous dates from an ICS file, a spreadsheet, or the approved Senate PDF : and are drafted within an afternoon.",
                 },
                 {
                   q: "How do students and staff actually receive the calendar?",
-                  a: "However they already work: a live ICS subscription in Google, Outlook, or Apple Calendar; an embed in the student portal and LMS; printable schedules; and optional notifications before key deadlines. No one has to 'check the notice board'.",
+                  a: "However they already work: a live ICS subscription in Google, Outlook, or Apple Calendar; are embed in the student portal and LMS; printable schedules; and optional notifications before key deadlines. No one has to 'check the notice board'.",
                 },
                 {
                   q: "What happens when a date changes mid-term?",
@@ -1011,7 +1011,7 @@ export function LandingPage({
                 },
                 {
                   q: "Who built Acadex?",
-                  a: "Two Computer Science diploma students Aliu Rashidat Olayemi (24280591102) and Anikola Oluwatimileyin Oluwadamilare (24280591110) of the Faculty of Computing and Information Technology, Lagos State University, supervised by Dr. Aiyeniko Olukayode.",
+                  a: "Two Computer Science diploma students Aliu Rashidat Olayemi (24280591102) and Akinola Oluwatimileyin Oluwadamilare (24280591110) of the Faculty of Computing and Information Technology, Lagos State University, supervised by Dr. Aiyeniko Olukayode.",
                 },
               ].map((faq, idx) => (
                 <div key={idx} className={`q-row ${openFaq === idx ? "open" : ""}`}>
@@ -1087,7 +1087,7 @@ export function LandingPage({
               </a>
               <p>
                 One authoritative academic calendar for Lagos State University built by Aliu Rashidat
-                Olayemi and Anikola Oluwatimileyin Oluwadamilare, Computer Science diploma students,
+                Olayemi and Akinola Oluwatimileyin Oluwadamilare, Computer Science diploma students,
                 supervised by {SUPERVISOR}.
               </p>
               <div className="foot-loc">Lagos State University, Badagry Expressway, Ojo, Lagos, Nigeria : est. 1983</div>

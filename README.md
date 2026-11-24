@@ -18,7 +18,7 @@ rescheduled events show exactly what changed and when.
 ## Built by
 
 Acadex was created by two Computer Science diploma students, **Aliu Rashidat
-Olayemi (24280591102)** and **Anikola Oluwatimileyin Oluwadamilare
+Olayemi (24280591102)** and **Akinola Oluwatimileyin Oluwadamilare
 (24280591110)**, of the Faculty of Computing and Information Technology, Lagos
 State University. Supervisor: **Dr. Aiyeniko Olukayode**.
 
